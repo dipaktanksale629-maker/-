@@ -12,18 +12,24 @@
         .header h1 { color: #1a73e8; margin: 0; font-size: 22px; }
         label { font-weight: bold; display: block; margin-top: 12px; color: #333; font-size: 14px; }
         input, textarea { width: 100%; padding: 12px; margin-top: 5px; border: 1.5px solid #dfe1e5; border-radius: 10px; box-sizing: border-box; font-size: 16px; }
-        .btn-main { background: #1a73e8; color: white; width: 100%; margin-top: 15px; padding: 12px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
-        .btn-pdf { background: #dc3545; margin-bottom: 10px; font-size: 13px; }
+        .btn-main { background: #28a745; color: white; width: 100%; margin-top: 15px; padding: 15px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 18px; width: 100%; }
         .tabs { display: flex; gap: 5px; margin-top: 20px; border-bottom: 2px solid #ddd; }
         .tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; font-weight: bold; color: #666; font-size: 12px; }
         .active-tab { color: #1a73e8; border-bottom: 3px solid #1a73e8; }
         .list-section { display: none; margin-top: 15px; }
         .active-section { display: block; }
-        .patient-card { background: #fff; border-radius: 12px; padding: 12px; margin-bottom: 10px; border: 1px solid #eee; position: relative; border-left: 5px solid #1a73e8; }
-        .checked-patient { opacity: 0.5; text-decoration: line-through; background: #f9f9f9; }
-        .btn-wa-sm { background: #25D366; color: white; border: none; padding: 8px; border-radius: 6px; font-size: 12px; width: 100%; margin-top: 5px; font-weight: bold; cursor: pointer; }
-        .btn-check { background: #6c757d; color: white; border: none; padding: 5px 10px; border-radius: 5px; font-size: 11px; cursor: pointer; margin-top: 8px; }
-        .preview-img { width: 100%; border-radius: 8px; margin-top: 10px; display: none; }
+        
+        /* Patient Card */
+        .patient-card { background: #fff; border-radius: 12px; padding: 12px; margin-bottom: 10px; border: 1px solid #eee; position: relative; border-left: 5px solid #1a73e8; transition: 0.3s; }
+        
+        /* Checked Status: No Line-through, only Dull */
+        .checked-patient { opacity: 0.4; background-color: #f2f2f2; border-left: 5px solid #28a745 !important; }
+        
+        .btn-wa-sm { color: white; border: none; padding: 10px; border-radius: 8px; font-size: 13px; width: 100%; margin-top: 8px; font-weight: bold; cursor: pointer; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 5px; animation: blink 1s infinite; }
+        .red-dot { background: #ff4757; }
+        .yellow-dot { background: #ffa500; }
+        @keyframes blink { 50% { opacity: 0.3; } }
     </style>
 </head>
 <body>
@@ -31,26 +37,23 @@
 <div class="container">
     <div class="header">
         <h1>🏥 साईदत्त क्लिनिक</h1>
-        <p>डॉ. रवींद्र घोंगडे</p>
+        <p><b>डॉ. रवींद्र घोंगडे</b></p>
     </div>
 
     <div id="formSection">
         <label>पेशंटचे नाव:</label>
-        <input type="text" id="name" placeholder="नाव">
+        <input type="text" id="name" placeholder="पूर्ण नाव">
         <label>मोबाईल नंबर:</label>
         <input type="number" id="phone" placeholder="9284XXXXXX">
         <div style="display:flex; gap:5px;">
             <div style="flex:1;"><label>तारीख:</label><input type="date" id="apt_date"></div>
             <div style="flex:1;"><label>वेळ:</label><input type="time" id="apt_time"></div>
         </div>
-        <label>फॉलो-अप तारीख:</label>
+        <label style="color:#e67e22;">फॉलो-अप तारीख:</label>
         <input type="date" id="fup_date">
-        <label>प्रिस्क्रिप्शन फोटो:</label>
-        <input type="file" id="photo" accept="image/*" onchange="previewFile()">
-        <img id="imgPreview" class="preview-img">
-        <label>नोट्स:</label>
-        <textarea id="symptoms" rows="2"></textarea>
-        <button class="btn-main" onclick="saveData()" style="background:#28a745; font-size:18px;">💾 सेव्ह आणि मेसेज</button>
+        <label>नोट्स (माहिती):</label>
+        <textarea id="symptoms" rows="2" placeholder="आजार किंवा औषधे..."></textarea>
+        <button class="btn-main" onclick="saveData()">💾 बुकिंग सेव्ह करा</button>
     </div>
 
     <div class="tabs">
@@ -60,31 +63,28 @@
     </div>
 
     <div id="dateWise" class="list-section active-section">
-        <div style="display:flex; gap:10px; align-items:center; margin-bottom:10px;">
-            <input type="date" id="filterDate" onchange="renderDateWise()" style="flex:1; background:#e8f0fe;">
-            <button class="btn-main btn-pdf" onclick="downloadPDF()" style="width:auto; margin:0; padding:10px;">📥 PDF</button>
+        <div style="display:flex; gap:10px; margin-bottom:10px;">
+            <input type="date" id="filterDate" onchange="renderDateWise()" style="flex:1; background:#e8f0fe; padding:10px; border-radius:10px; border:1px solid #ddd;">
+            <button onclick="downloadPDF()" style="background:#dc3545; color:white; border:none; border-radius:10px; padding:0 15px; cursor:pointer;">📥 PDF</button>
         </div>
         <div id="dateContent"></div>
     </div>
 
-    <div id="reminderTab" class="list-section"><div id="reminderContent"></div></div>
+    <div id="reminderTab" class="list-section">
+        <h3 style="font-size:15px; margin-bottom:10px;">आज आणि परवाचे फॉलो-अप्स</h3>
+        <div id="reminderContent"></div>
+    </div>
+
     <div id="broadcastTab" class="list-section">
         <textarea id="bcMsg" rows="3" placeholder="मेसेज लिहा..."></textarea>
-        <div id="bcContent"></div>
+        <div id="bcContent" style="margin-top:10px;"></div>
     </div>
 </div>
 
 <script>
-    let currentImgBase64 = "";
+    const DB_KEY = 'saidatt_final_fixed_v16';
     document.getElementById('apt_date').valueAsDate = new Date();
     document.getElementById('filterDate').valueAsDate = new Date();
-
-    function previewFile() {
-        const file = document.getElementById('photo').files[0];
-        const reader = new FileReader();
-        reader.onloadend = () => { currentImgBase64 = reader.result; document.getElementById('imgPreview').src = reader.result; document.getElementById('imgPreview').style.display = "block"; }
-        if (file) reader.readAsDataURL(file);
-    }
 
     function switchTab(el, id) {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active-tab'));
@@ -99,52 +99,125 @@
     function saveData() {
         const name = document.getElementById('name').value;
         const phone = document.getElementById('phone').value;
+        const symptoms = document.getElementById('symptoms').value;
+        const date = document.getElementById('apt_date').value;
+        const time = document.getElementById('apt_time').value;
+
         if(!name || !phone) return alert("नाव आणि नंबर भरा!");
-        const patient = { id: Date.now(), name, phone, apt_date: document.getElementById('apt_date').value, apt_time: document.getElementById('apt_time').value, fup_date: document.getElementById('fup_date').value, symptoms: document.getElementById('symptoms').value, photo: currentImgBase64, checked: false };
-        let db = JSON.parse(localStorage.getItem('saidatt_final_db')) || [];
+
+        const patient = {
+            id: Date.now(), name, phone, symptoms,
+            apt_date: date, apt_time: time,
+            fup_date: document.getElementById('fup_date').value,
+            checked: false
+        };
+
+        let db = JSON.parse(localStorage.getItem(DB_KEY)) || [];
         db.push(patient);
-        localStorage.setItem('saidatt_final_db', JSON.stringify(db));
-        window.open(`https://wa.me/91${phone}?text=${encodeURIComponent('नमस्कार ' + name + ', आपली अपॉइंटमेंट बुक झाली आहे. - साईदत्त क्लिनिक')}`, '_blank');
+        localStorage.setItem(DB_KEY, JSON.stringify(db));
+
+        const msg = `🏥 *साईदत्त क्लिनिक*\n\nनमस्कार *${name}*,\n\nआपली अपॉइंटमेंट यशस्वीरित्या बुक झाली आहे.\n📅 *तारीख:* ${date}\n⏰ *वेळ:* ${time}\n\n- *डॉ. रवींद्र घोंगडे* 🙏`;
+        
+        window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`, '_blank');
         location.reload();
     }
 
     function renderDateWise() {
         const selDate = document.getElementById('filterDate').value;
         const container = document.getElementById('dateContent');
-        let db = JSON.parse(localStorage.getItem('saidatt_final_db')) || [];
+        let db = JSON.parse(localStorage.getItem(DB_KEY)) || [];
         const filtered = db.filter(p => p.apt_date === selDate);
-        container.innerHTML = filtered.length ? "" : "<p>ह्या तारखेला डेटा नाही.</p>";
+        
+        container.innerHTML = filtered.length ? "" : "<p style='text-align:center;'>डेटा नाही.</p>";
         filtered.forEach((p, i) => {
             container.innerHTML += `
                 <div class="patient-card ${p.checked ? 'checked-patient' : ''}">
-                    <b>${i+1}. ${p.name}</b><br><small>⏰ ${p.apt_time} | 📞 ${p.phone}</small>
-                    <p style="font-size:13px; margin:5px 0;">${p.symptoms}</p>
-                    ${p.photo ? `<img src="${p.photo}" style="width:80px; border-radius:5px;">` : ""}
-                    <br><button class="btn-check" onclick="toggleCheck(${p.id})">${p.checked ? '✅ तपासले' : '☑️ चेक'}</button>
-                    <button onclick="deleteRec(${p.id})" style="color:red; background:none; border:none; float:right; cursor:pointer;">Delete</button>
+                    <b>${i+1}. ${p.name}</b><br>
+                    <small>⏰ ${p.apt_time} | 📞 ${p.phone}</small>
+                    <p style="font-size:13px; margin:5px 0;">📝 ${p.symptoms || 'माहिती नाही'}</p>
+                    <button onclick="toggleCheck(${p.id})" style="background:#6c757d; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-size:11px;">
+                        ${p.checked ? '✅ तपासले' : '☑️ चेक'}
+                    </button>
+                    <button onclick="deleteRec(${p.id})" style="color:red; background:none; border:none; float:right; cursor:pointer; font-size:12px;">Delete</button>
                 </div>`;
         });
+    }
+
+    function renderReminders() {
+        const container = document.getElementById('reminderContent');
+        let db = JSON.parse(localStorage.getItem(DB_KEY)) || [];
+        const today = new Date(); today.setHours(0,0,0,0);
+        container.innerHTML = "";
+        let found = false;
+
+        db.forEach(p => {
+            if(!p.fup_date) return;
+            const fupDate = new Date(p.fup_date); fupDate.setHours(0,0,0,0);
+            const diffDays = Math.ceil((fupDate - today) / (1000 * 60 * 60 * 24));
+
+            if(diffDays === 0 || diffDays === 2) {
+                found = true;
+                const isToday = (diffDays === 0);
+                const msg = `🏥 *साईदत्त क्लिनिक*\n\nनमस्कार *${p.name}*,\n\nआपल्याला आठवण करून देण्यात येते की ${isToday ? '*आज*' : '*परवा*'} आपली फॉलो-अप भेट आहे.\n🗓️ *तारीख:* ${p.fup_date}\n\nकृपया वेळेवर उपस्थित राहा.\n\n- *डॉ. रवींद्र घोंगडे*`;
+                
+                container.innerHTML += `
+                    <div class="patient-card" style="border-left-color: ${isToday ? '#ff4757' : '#ffa500'}">
+                        <span class="dot ${isToday ? 'red-dot' : 'yellow-dot'}"></span> <b>${p.name}</b><br>
+                        <small>फॉलो-अप: ${p.fup_date}</small><br>
+                        <button class="btn-wa-sm" onclick="sendDirectWA('${p.phone}', '${encodeURIComponent(msg)}')" style="background:${isToday ? '#25D366' : '#ffa500'}">
+                            ${isToday ? 'आजचा मेसेज पाठवा' : '२ दिवस आधीचा मेसेज'}
+                        </button>
+                    </div>`;
+            }
+        });
+        if(!found) container.innerHTML = "<p>रिमाइन्डर्स नाहीत.</p>";
+    }
+
+    // Direct WhatsApp Function for Reminders
+    function sendDirectWA(phone, encodedMsg) {
+        window.open(`https://wa.me/91${phone}?text=${encodedMsg}`, '_blank');
+    }
+
+    function renderBroadcast() {
+        const container = document.getElementById('bcContent');
+        let db = JSON.parse(localStorage.getItem(DB_KEY)) || [];
+        container.innerHTML = "";
+        [...db].reverse().slice(0, 30).forEach(p => {
+            container.innerHTML += `
+                <div style="display:flex; justify-content:space-between; padding:12px; border-bottom:1px solid #eee; align-items:center;">
+                    <span>${p.name}</span>
+                    <button onclick="sendBC('${p.name}', '${p.phone}')" style="background:#25D366; color:white; border:none; padding:5px 15px; border-radius:5px; cursor:pointer;">पाठवा</button>
+                </div>`;
+        });
+    }
+
+    function sendBC(name, phone) {
+        const txt = document.getElementById('bcMsg').value;
+        if(!txt) return alert("मेसेज लिहा!");
+        const msg = `🏥 *साईदत्त क्लिनिक*\n\nनमस्कार *${name}*,\n\n${txt}\n\n- *डॉ. रवींद्र घोंगडे*`;
+        window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+    }
+
+    function toggleCheck(id) {
+        let db = JSON.parse(localStorage.getItem(DB_KEY)) || [];
+        db = db.map(p => p.id === id ? { ...p, checked: !p.checked } : p);
+        localStorage.setItem(DB_KEY, JSON.stringify(db));
+        renderDateWise();
+    }
+
+    function deleteRec(id) {
+        if(confirm("डिलीट करायचे?")) {
+            let db = JSON.parse(localStorage.getItem(DB_KEY)) || [];
+            localStorage.setItem(DB_KEY, JSON.stringify(db.filter(x => x.id !== id)));
+            renderDateWise();
+        }
     }
 
     function downloadPDF() {
         const element = document.getElementById('dateContent');
         const date = document.getElementById('filterDate').value;
-        if(!element.innerText || element.innerText.includes("डेटा नाही")) return alert("डाउनलोड करण्यासाठी डेटा नाही!");
-        const opt = { margin: 10, filename: `Patient_Report_${date}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
-        html2pdf().set(opt).from(element).save();
+        html2pdf().from(element).set({ margin: 10, filename: `Saidatt_${date}.pdf`, jsPDF: { unit: 'mm', format: 'a4' } }).save();
     }
-
-    function toggleCheck(id) {
-        let db = JSON.parse(localStorage.getItem('saidatt_final_db')) || [];
-        db = db.map(p => p.id === id ? { ...p, checked: !p.checked } : p);
-        localStorage.setItem('saidatt_final_db', JSON.stringify(db));
-        renderDateWise();
-    }
-
-    function deleteRec(id) { if(confirm("डिलीट करायचे?")) { let db = JSON.parse(localStorage.getItem('saidatt_final_db')) || []; localStorage.setItem('saidatt_final_db', JSON.stringify(db.filter(x => x.id !== id))); renderDateWise(); } }
-
-    function renderReminders() { /* Same as previous version */ }
-    function renderBroadcast() { /* Same as previous version */ }
 
     renderDateWise();
 </script>
