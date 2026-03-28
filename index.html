@@ -12,15 +12,12 @@
         .header p { color: #555; margin: 5px 0; font-weight: bold; }
         label { font-weight: bold; display: block; margin-top: 15px; color: #333; }
         input, textarea { width: 100%; padding: 12px; margin-top: 5px; border: 1.5px solid #dfe1e5; border-radius: 10px; box-sizing: border-box; font-size: 16px; }
-        .btn-save { background: #28a745; color: white; width: 100%; margin-top: 20px; padding: 15px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 18px; }
+        .btn-save { background: linear-gradient(135deg, #28a745, #218838); color: white; width: 100%; margin-top: 20px; padding: 15px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 18px; }
         .btn-view { background: #007bff; color: white; width: 100%; margin-top: 10px; padding: 12px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
-        .btn-broadcast { background: #6f42c1; color: white; width: 100%; margin-top: 10px; padding: 12px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
-        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-        .btn-wa { background: #25D366; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; text-align: center; }
-        #dataList, #broadcastList { margin-top: 25px; display: none; }
-        .patient-card { background: #fff; border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border-left: 5px solid #1a73e8; }
-        .reminder-tag { background: #ff4757; color: white; padding: 5px 12px; border-radius: 20px; font-size: 13px; display: inline-block; margin-bottom: 10px; font-weight: bold; animation: blinker 1.5s linear infinite; }
-        @keyframes blinker { 50% { opacity: 0.5; } }
+        #dataList { margin-top: 25px; display: none; }
+        .patient-card { background: #fff; border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border-left: 5px solid #1a73e8; position: relative; }
+        .sr-no { position: absolute; right: 15px; top: 15px; background: #1a73e8; color: white; width: 25px; height: 25px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; }
+        .time-tag { color: #1a73e8; font-weight: bold; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -33,30 +30,21 @@
     
     <label>पेशंटचे नाव:</label>
     <input type="text" id="name" placeholder="पूर्ण नाव">
+
     <label>मोबाईल नंबर:</label>
     <input type="number" id="phone" placeholder="9284XXXXXX">
-    <label>आजची भेट वेळ:</label>
-    <div style="display:flex; gap:5px;"><input type="date" id="apt_date"><input type="time" id="apt_time"></div>
-    <label style="color:#e67e22;">पुढचा फॉलो-अप:</label>
-    <input type="date" id="fup_date">
+
+    <label>अपॉइंटमेंट तारीख व वेळ:</label>
+    <div style="display:flex; gap:5px;">
+        <input type="date" id="apt_date">
+        <input type="time" id="apt_time">
+    </div>
+
     <label>औषधे / नोट्स:</label>
-    <textarea id="symptoms" rows="2"></textarea>
+    <textarea id="symptoms" rows="2" placeholder="माहिती..."></textarea>
 
-    <button class="btn-save" onclick="saveData()">💾 डेटा सेव्ह करा</button>
-    
-    <div class="btn-group">
-        <button class="btn-wa" onclick="sendQuickWA('booking')">Booking मेसेज</button>
-        <button class="btn-wa" style="background:#075E54" onclick="sendQuickWA('remind')">रिमाइन्डर</button>
-    </div>
-
-    <button class="btn-broadcast" onclick="toggleBroadcast()">📢 सर्व पेशंटना अपडेट पाठवा</button>
+    <button class="btn-save" onclick="saveAndSend()">💾 सेव्ह करा आणि मेसेज पाठवा</button>
     <button class="btn-view" onclick="toggleData()">📂 पेशंट यादी पहा</button>
-
-    <div id="broadcastList">
-        <h3 style="color:#6f42c1;">📢 ब्रॉडकास्ट मेसेज</h3>
-        <textarea id="updateMsg" rows="3" placeholder="उदा. क्लिनिक उद्या बंद राहील / औषधे वेळेवर घ्या..."></textarea>
-        <div id="broadcastContent"></div>
-    </div>
 
     <div id="dataList">
         <h3 style="color:#1a73e8;">पेशंट रेकॉर्ड्स:</h3>
@@ -67,77 +55,69 @@
 <script>
     document.getElementById('apt_date').valueAsDate = new Date();
 
-    function saveData() {
-        const name = document.getElementById('name').value;
-        const phone = document.getElementById('phone').value;
-        if(!name || !phone) return alert("नाव आणि नंबर भरा!");
-        const patient = { id: Date.now(), name, phone, apt_date: document.getElementById('apt_date').value, apt_time: document.getElementById('apt_time').value, fup_date: document.getElementById('fup_date').value, symptoms: document.getElementById('symptoms').value };
-        let db = JSON.parse(localStorage.getItem('saidatt_clinic_v5')) || [];
-        db.push(patient);
-        localStorage.setItem('saidatt_clinic_v5', JSON.stringify(db));
-        alert("माहिती सेव्ह झाली!");
-        location.reload(); 
-    }
-
-    function toggleBroadcast() {
-        const list = document.getElementById('broadcastList');
-        document.getElementById('dataList').style.display = 'none';
-        list.style.display = list.style.display === 'none' ? 'block' : 'none';
-        renderBroadcast();
-    }
-
-    function renderBroadcast() {
-        const container = document.getElementById('broadcastContent');
-        let db = JSON.parse(localStorage.getItem('saidatt_clinic_v5')) || [];
-        container.innerHTML = db.length === 0 ? "<p>पेशंट उपलब्ध नाहीत.</p>" : "";
-        db.reverse().forEach(p => {
-            container.innerHTML += `
-                <div style="background:#f8f9fa; padding:10px; border-radius:10px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
-                    <span><b>${p.name}</b> (${p.phone})</span>
-                    <button onclick="sendUpdate('${p.name}', '${p.phone}')" style="background:#25D366; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">पाठवा</button>
-                </div>`;
-        });
-    }
-
-    function sendUpdate(name, phone) {
-        const customMsg = document.getElementById('updateMsg').value;
-        if(!customMsg) return alert("कृपया मेसेज टाईप करा!");
-        const fullMsg = `नमस्कार ${name},\n${customMsg}\n- साईदत्त क्लिनिक (डॉ. रवींद्र घोंगडे)`;
-        window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(fullMsg)}`, '_blank');
-    }
-
-    function toggleData() {
-        const list = document.getElementById('dataList');
-        document.getElementById('broadcastList').style.display = 'none';
-        list.style.display = list.style.display === 'none' ? 'block' : 'none';
-        renderData();
-    }
-
-    function renderData() {
-        const container = document.getElementById('listContent');
-        let db = JSON.parse(localStorage.getItem('saidatt_clinic_v5')) || [];
-        const today = new Date().setHours(0,0,0,0);
-        container.innerHTML = db.length === 0 ? "<p>डेटा नाही.</p>" : "";
-        db.reverse().forEach(p => {
-            let reminderHtml = "";
-            if(p.fup_date) {
-                const fupDateObj = new Date(p.fup_date).setHours(0,0,0,0);
-                const diffDays = Math.ceil((fupDateObj - today) / (1000 * 60 * 60 * 24));
-                if(diffDays <= 2 && diffDays >= 0) reminderHtml = `<div class="reminder-tag">🔔 फॉलो-अप: ${diffDays === 0 ? 'आज' : diffDays + ' दिवसात'}</div>`;
-            }
-            container.innerHTML += `<div class="patient-card">${reminderHtml}<br><b>${p.name}</b><br><small>📞 ${p.phone}</small><p>${p.symptoms}</p></div>`;
-        });
-    }
-
-    function sendQuickWA(type) {
+    function saveAndSend() {
         const name = document.getElementById('name').value;
         const phone = document.getElementById('phone').value;
         const aptDate = document.getElementById('apt_date').value;
         const aptTime = document.getElementById('apt_time').value;
-        if(!phone) return alert("नंबर टाका!");
-        let msg = (type === 'booking') ? `नमस्कार ${name}, तुमची अपॉइंटमेंट ${aptDate} वेळ ${aptTime} ला निश्चित झाली आहे. - साईदत्त क्लिनिक` : `नमस्कार ${name}, आपली प्रकृती कशी आहे? औषधे वेळेवर घेत राहा. काही त्रास वाटल्यास संपर्क करा. - डॉ. रवींद्र घोंगडे`;
+
+        if(!name || !phone) return alert("नाव आणि नंबर भरा!");
+
+        // 1. डेटा सेव्ह करा
+        const patient = {
+            id: Date.now(),
+            name: name,
+            phone: phone,
+            apt_date: aptDate,
+            apt_time: aptTime,
+            symptoms: document.getElementById('symptoms').value
+        };
+
+        let db = JSON.parse(localStorage.getItem('saidatt_clinic_v6')) || [];
+        db.push(patient);
+        localStorage.setItem('saidatt_clinic_v6', JSON.stringify(db));
+
+        // 2. व्हॉट्सॲप मेसेज पाठवा
+        const msg = `नमस्कार ${name}, साईदत्त क्लिनिकमध्ये तुमची अपॉइंटमेंट ${aptDate} रोजी वेळ ${aptTime} ला निश्चित झाली आहे. धन्यवाद! - डॉ. रवींद्र घोंगडे`;
         window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+
+        alert("माहिती सेव्ह झाली!");
+        location.reload(); 
+    }
+
+    function renderData() {
+        const container = document.getElementById('listContent');
+        let db = JSON.parse(localStorage.getItem('saidatt_clinic_v6')) || [];
+        container.innerHTML = db.length === 0 ? "<p>डेटा नाही.</p>" : "";
+        
+        db.reverse().forEach((p, index) => {
+            container.innerHTML += `
+                <div class="patient-card">
+                    <div class="sr-no">${db.length - index}</div>
+                    <strong>👤 ${p.name}</strong><br>
+                    <small>📞 ${p.phone}</small><br>
+                    <span class="time-tag">⏰ वेळ: ${p.apt_date} | ${p.apt_time}</span>
+                    <p style="margin:8px 0; font-size:14px; color:#555;">📝 ${p.symptoms}</p>
+                    <button onclick="deleteRec(${p.id})" style="color:red; background:none; border:none; cursor:pointer; font-size:12px;">Delete</button>
+                </div>
+            `;
+        });
+    }
+
+    function toggleData() {
+        const list = document.getElementById('dataList');
+        list.style.display = list.style.display === 'none' ? 'block' : 'none';
+        renderData();
+    }
+
+    function deleteRec(id) {
+        if(confirm("डिलीट करायचे?")) {
+            let db = JSON.parse(localStorage.getItem('saidatt_clinic_v6')) || [];
+            localStorage.setItem('saidatt_clinic_v6', JSON.stringify(db.filter(x => x.id !== id)));
+            renderData();
+        }
     }
 </script>
+
 </body>
 </html>
