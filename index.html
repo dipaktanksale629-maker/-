@@ -12,12 +12,20 @@
         .header p { color: #555; margin: 5px 0; font-weight: bold; }
         label { font-weight: bold; display: block; margin-top: 15px; color: #333; }
         input, textarea { width: 100%; padding: 12px; margin-top: 5px; border: 1.5px solid #dfe1e5; border-radius: 10px; box-sizing: border-box; font-size: 16px; }
+        
         .btn-save { background: linear-gradient(135deg, #28a745, #218838); color: white; width: 100%; margin-top: 20px; padding: 15px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 18px; }
+        .btn-broadcast { background: #6f42c1; color: white; width: 100%; margin-top: 10px; padding: 12px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
         .btn-view { background: #007bff; color: white; width: 100%; margin-top: 10px; padding: 12px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
-        #dataList { margin-top: 25px; display: none; }
+        
+        #dataList, #broadcastList { margin-top: 25px; display: none; }
         .patient-card { background: #fff; border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border-left: 5px solid #1a73e8; position: relative; }
         .sr-no { position: absolute; right: 15px; top: 15px; background: #1a73e8; color: white; width: 25px; height: 25px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; }
-        .time-tag { color: #1a73e8; font-weight: bold; font-size: 14px; }
+        
+        .reminder-tag { background: #ff4757; color: white; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; display: inline-block; margin-bottom: 10px; animation: blinker 1.5s linear infinite; }
+        @keyframes blinker { 50% { opacity: 0.5; } }
+        
+        .broadcast-item { background: #f8f9fa; padding: 10px; border-radius: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #ddd; }
+        .btn-send-wa { background: #25D366; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -40,11 +48,21 @@
         <input type="time" id="apt_time">
     </div>
 
+    <label style="color:#e67e22;">पुढचा फॉलो-अप (Follow-up Date):</label>
+    <input type="date" id="fup_date">
+
     <label>औषधे / नोट्स:</label>
     <textarea id="symptoms" rows="2" placeholder="माहिती..."></textarea>
 
     <button class="btn-save" onclick="saveAndSend()">💾 सेव्ह करा आणि मेसेज पाठवा</button>
-    <button class="btn-view" onclick="toggleData()">📂 पेशंट यादी पहा</button>
+    <button class="btn-broadcast" onclick="toggleBroadcast()">📢 सर्व पेशंटना अपडेट पाठवा</button>
+    <button class="btn-view" onclick="toggleData()">📂 पेशंट यादी / रिमाइन्डर्स</button>
+
+    <div id="broadcastList">
+        <h3 style="color:#6f42c1;">📢 ब्रॉडकास्ट मेसेज</h3>
+        <textarea id="bcMsg" rows="3" placeholder="उदा. उद्या क्लिनिक बंद राहील / औषधे वेळेवर घ्या..."></textarea>
+        <div id="bcContent"></div>
+    </div>
 
     <div id="dataList">
         <h3 style="color:#1a73e8;">पेशंट रेकॉर्ड्स:</h3>
@@ -60,24 +78,20 @@
         const phone = document.getElementById('phone').value;
         const aptDate = document.getElementById('apt_date').value;
         const aptTime = document.getElementById('apt_time').value;
+        const fupDate = document.getElementById('fup_date').value;
 
         if(!name || !phone) return alert("नाव आणि नंबर भरा!");
 
-        // 1. डेटा सेव्ह करा
         const patient = {
             id: Date.now(),
-            name: name,
-            phone: phone,
-            apt_date: aptDate,
-            apt_time: aptTime,
+            name, phone, apt_date: aptDate, apt_time: aptTime, fup_date: fupDate,
             symptoms: document.getElementById('symptoms').value
         };
 
-        let db = JSON.parse(localStorage.getItem('saidatt_clinic_v6')) || [];
+        let db = JSON.parse(localStorage.getItem('saidatt_pro_v1')) || [];
         db.push(patient);
-        localStorage.setItem('saidatt_clinic_v6', JSON.stringify(db));
+        localStorage.setItem('saidatt_pro_v1', JSON.stringify(db));
 
-        // 2. व्हॉट्सॲप मेसेज पाठवा
         const msg = `नमस्कार ${name}, साईदत्त क्लिनिकमध्ये तुमची अपॉइंटमेंट ${aptDate} रोजी वेळ ${aptTime} ला निश्चित झाली आहे. धन्यवाद! - डॉ. रवींद्र घोंगडे`;
         window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`, '_blank');
 
@@ -87,37 +101,74 @@
 
     function renderData() {
         const container = document.getElementById('listContent');
-        let db = JSON.parse(localStorage.getItem('saidatt_clinic_v6')) || [];
+        let db = JSON.parse(localStorage.getItem('saidatt_pro_v1')) || [];
+        const today = new Date().setHours(0,0,0,0);
         container.innerHTML = db.length === 0 ? "<p>डेटा नाही.</p>" : "";
         
         db.reverse().forEach((p, index) => {
+            let reminderHtml = "";
+            if(p.fup_date) {
+                const fupDateObj = new Date(p.fup_date).setHours(0,0,0,0);
+                const diffDays = Math.ceil((fupDateObj - today) / (1000 * 60 * 60 * 24));
+                if(diffDays <= 2 && diffDays >= 0) {
+                    reminderHtml = `<div class="reminder-tag">🔔 फॉलो-अप: ${diffDays === 0 ? 'आज' : diffDays + ' दिवसात'}</div>`;
+                }
+            }
+
             container.innerHTML += `
                 <div class="patient-card">
                     <div class="sr-no">${db.length - index}</div>
+                    ${reminderHtml}<br>
                     <strong>👤 ${p.name}</strong><br>
-                    <small>📞 ${p.phone}</small><br>
-                    <span class="time-tag">⏰ वेळ: ${p.apt_date} | ${p.apt_time}</span>
+                    <small>📞 ${p.phone} | 📅 भेट: ${p.apt_date} ${p.apt_time}</small><br>
+                    <small><b>फॉलो-अप तारीख: ${p.fup_date || 'नाही'}</b></small>
                     <p style="margin:8px 0; font-size:14px; color:#555;">📝 ${p.symptoms}</p>
-                    <button onclick="deleteRec(${p.id})" style="color:red; background:none; border:none; cursor:pointer; font-size:12px;">Delete</button>
-                </div>
-            `;
+                    <button onclick="deleteRec(${p.id})" style="color:red; background:none; border:none; cursor:pointer; font-size:12px;">Delete Record</button>
+                </div>`;
         });
+    }
+
+    function toggleBroadcast() {
+        const list = document.getElementById('broadcastList');
+        document.getElementById('dataList').style.display = 'none';
+        list.style.display = list.style.display === 'none' ? 'block' : 'none';
+        renderBroadcast();
+    }
+
+    function renderBroadcast() {
+        const container = document.getElementById('bcContent');
+        let db = JSON.parse(localStorage.getItem('saidatt_pro_v1')) || [];
+        container.innerHTML = "";
+        db.reverse().forEach(p => {
+            container.innerHTML += `
+                <div class="broadcast-item">
+                    <span>${p.name} (${p.phone})</span>
+                    <button class="btn-send-wa" onclick="sendBC('${p.name}', '${p.phone}')">पाठवा</button>
+                </div>`;
+        });
+    }
+
+    function sendBC(name, phone) {
+        const customMsg = document.getElementById('bcMsg').value;
+        if(!customMsg) return alert("मेसेज टाईप करा!");
+        const fullMsg = `नमस्कार ${name},\n${customMsg}\n- साईदत्त क्लिनिक`;
+        window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(fullMsg)}`, '_blank');
     }
 
     function toggleData() {
         const list = document.getElementById('dataList');
+        document.getElementById('broadcastList').style.display = 'none';
         list.style.display = list.style.display === 'none' ? 'block' : 'none';
         renderData();
     }
 
     function deleteRec(id) {
         if(confirm("डिलीट करायचे?")) {
-            let db = JSON.parse(localStorage.getItem('saidatt_clinic_v6')) || [];
-            localStorage.setItem('saidatt_clinic_v6', JSON.stringify(db.filter(x => x.id !== id)));
+            let db = JSON.parse(localStorage.getItem('saidatt_pro_v1')) || [];
+            localStorage.setItem('saidatt_pro_v1', JSON.stringify(db.filter(x => x.id !== id)));
             renderData();
         }
     }
 </script>
-
 </body>
 </html>
