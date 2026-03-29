@@ -12,18 +12,17 @@
         .header h1 { color: #1a73e8; margin: 0; font-size: 22px; }
         label { font-weight: bold; display: block; margin-top: 12px; color: #333; font-size: 14px; }
         input, textarea { width: 100%; padding: 12px; margin-top: 5px; border: 1.5px solid #dfe1e5; border-radius: 10px; box-sizing: border-box; font-size: 16px; }
-        .btn-main { background: #28a745; color: white; width: 100%; margin-top: 15px; padding: 15px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 18px; width: 100%; }
+        .btn-main { background: #28a745; color: white; width: 100%; margin-top: 15px; padding: 15px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 18px; }
         .tabs { display: flex; gap: 5px; margin-top: 20px; border-bottom: 2px solid #ddd; }
         .tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; font-weight: bold; color: #666; font-size: 12px; }
         .active-tab { color: #1a73e8; border-bottom: 3px solid #1a73e8; }
         .list-section { display: none; margin-top: 15px; }
         .active-section { display: block; }
-        .patient-card { background: #fff; border-radius: 12px; padding: 12px; margin-bottom: 10px; border: 1px solid #eee; border-left: 5px solid #1a73e8; position: relative; }
-        .checked-patient { opacity: 0.4; background-color: #f2f2f2; border-left-color: #28a745; }
-        .fup-input-group { display: flex; gap: 5px; margin-top: 10px; background: #fff8e1; padding: 8px; border-radius: 8px; border: 1px dashed #ffb300; }
-        .fup-btn { background: #ff9800; color: white; border: none; border-radius: 5px; padding: 5px 10px; cursor: pointer; font-weight: bold; }
-        .btn-wa-link { background: #25D366; color: white; padding: 12px; border-radius: 8px; width: 100%; margin-top: 10px; font-weight: bold; text-decoration: none; display: block; text-align: center; box-sizing: border-box; font-size: 14px; }
-        .bc-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
+        .patient-card { background: #fff; border-radius: 12px; padding: 15px; margin-bottom: 15px; border: 1px solid #eee; border-left: 6px solid #1a73e8; }
+        .checked-patient { opacity: 0.5; background-color: #f9f9f9; }
+        .fup-section { margin-top: 15px; padding-top: 10px; border-top: 1px dashed #ccc; }
+        .btn-wa-link { background: #25D366; color: white; padding: 12px; border-radius: 8px; width: 100%; margin-top: 10px; font-weight: bold; text-decoration: none; display: block; text-align: center; box-sizing: border-box; }
+        .btn-update { background: #ff9800; color: white; border: none; padding: 8px 15px; border-radius: 5px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -39,7 +38,7 @@
         <input type="text" id="name" placeholder="पूर्ण नाव">
         <label>मोबाईल नंबर:</label>
         <input type="number" id="phone" placeholder="नंबर">
-        <div style="display:flex; gap:5px;">
+        <div style="display:flex; gap:10px;">
             <div style="flex:1;"><label>तारीख:</label><input type="date" id="apt_date"></div>
             <div style="flex:1;"><label>वेळ:</label><input type="time" id="apt_time"></div>
         </div>
@@ -53,20 +52,20 @@
     </div>
 
     <div id="dateWise" class="list-section active-section">
-        <input type="date" id="filterDate" onchange="renderDateWise()" style="margin-bottom:10px;">
+        <input type="date" id="filterDate" onchange="renderDateWise()" style="margin-bottom:15px;">
         <div id="dateContent"></div>
     </div>
 
     <div id="reminderTab" class="list-section"><div id="reminderContent"></div></div>
     
     <div id="broadcastTab" class="list-section">
-        <textarea id="bcMsg" rows="3" placeholder="ब्रॉडकास्ट मेसेज..."></textarea>
+        <textarea id="bcMsg" rows="3" placeholder="ब्रॉडकास्ट मेसेज लिहा..."></textarea>
         <div id="bcContent" style="margin-top:10px;"></div>
     </div>
 </div>
 
 <script>
-    const DB_KEY = 'saidatt_official_v30'; 
+    const DB_KEY = 'saidatt_pro_v31'; 
     const BOOKING_NOS = "9604174209 / 02162238539";
     
     document.getElementById('apt_date').valueAsDate = new Date();
@@ -99,14 +98,15 @@
     function saveData() {
         const name = document.getElementById('name').value;
         const phone = document.getElementById('phone').value;
-        if(!name || !phone) return alert("नाव आणि नंबर आवश्यक!");
+        if(!name || !phone) return alert("नाव आणि नंबर भरा!");
         const p = { id: Date.now(), name, phone, apt_date: document.getElementById('apt_date').value, apt_time: document.getElementById('apt_time').value, fup_date: "", checked: false };
         let db = JSON.parse(localStorage.getItem(DB_KEY)) || [];
         db.push(p);
         localStorage.setItem(DB_KEY, JSON.stringify(db));
         
         const msg = `🏥 *साईदत्त क्लिनिक*\n\nनमस्कार *${name}*,\nआपली अपॉइंटमेंट बुक झाली आहे.\n📅 तारीख: ${fDate(p.apt_date)}\n⏰ वेळ: ${fTime(p.apt_time)}\n\n- डॉ. रवींद्र घोंगडे`;
-        window.location.href = `https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`;
+        window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+        location.reload();
     }
 
     function updateFup(id) {
@@ -115,7 +115,7 @@
         let db = JSON.parse(localStorage.getItem(DB_KEY)) || [];
         db = db.map(p => p.id === id ? {...p, fup_date: fVal} : p);
         localStorage.setItem(DB_KEY, JSON.stringify(db));
-        alert("Follow-up अपडेट झाला!");
+        alert("Follow-up Update Zala!");
         renderDateWise();
     }
 
@@ -124,20 +124,28 @@
         const cont = document.getElementById('dateContent');
         let db = JSON.parse(localStorage.getItem(DB_KEY)) || [];
         const filtered = db.filter(x => x.apt_date === sel);
-        cont.innerHTML = filtered.length ? "" : "<p style='text-align:center;'>डेटा नाही.</p>";
+        cont.innerHTML = filtered.length ? "" : "<p style='text-align:center;'>Data Nahi.</p>";
         filtered.forEach(p => {
             cont.innerHTML += `
                 <div class="patient-card ${p.checked ? 'checked-patient' : ''}">
-                    <b>${p.name}</b> <small style="float:right;">${fTime(p.apt_time)}</small><br>
-                    <small>📞 ${p.phone}</small><br>
-                    <div class="fup-input-group">
-                        <input type="date" id="fup_in_${p.id}" value="${p.fup_date}" style="flex:1;">
-                        <button class="fup-btn" onclick="updateFup(${p.id})">Update</button>
+                    <div style="display:flex; justify-content:space-between;">
+                        <b>${p.name}</b>
+                        <small>${fTime(p.apt_time)}</small>
                     </div>
-                    <div style="margin-top:10px; display:flex; justify-content:space-between; align-items:center;">
-                        <button onclick="toggleCheck(${p.id})">${p.checked ? '✅ OK' : '☑️ Check'}</button>
-                        <span style="color:#d35400; font-weight:bold; font-size:12px;">Next: ${fDate(p.fup_date)}</span>
-                        <button onclick="deleteRec(${p.id})" style="color:red; border:none; background:none;">Del</button>
+                    <small>📞 ${p.phone}</small>
+                    
+                    <div class="fup-section">
+                        <label style="margin:0; font-size:12px;">Next Follow-up Date:</label>
+                        <div style="display:flex; gap:5px; margin-top:5px;">
+                            <input type="date" id="fup_in_${p.id}" value="${p.fup_date}" style="padding:5px; margin:0;">
+                            <button class="btn-update" onclick="updateFup(${p.id})">SET</button>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:15px; display:flex; justify-content:space-between; align-items:center;">
+                        <button onclick="toggleCheck(${p.id})" style="border:1px solid #ccc; padding:5px 10px; border-radius:5px;">${p.checked ? '✅ Done' : 'Check'}</button>
+                        <b style="color:#d35400; font-size:12px;">F/Up: ${fDate(p.fup_date)}</b>
+                        <button onclick="deleteRec(${p.id})" style="color:red; border:none; background:none; font-size:12px;">Delete</button>
                     </div>
                 </div>`;
         });
@@ -147,28 +155,33 @@
         const cont = document.getElementById('reminderContent');
         let db = JSON.parse(localStorage.getItem(DB_KEY)) || [];
         const today = new Date(); today.setHours(0,0,0,0);
-        cont.innerHTML = "<h3>🔔 रिमाइन्डर्स</h3>";
+        cont.innerHTML = "<h3>🔔 Today & Upcoming</h3>";
+        
+        let found = false;
         db.forEach(p => {
             if(!p.fup_date) return;
             const fd = new Date(p.fup_date); fd.setHours(0,0,0,0);
             const diff = Math.ceil((fd - today) / 86400000);
 
             if(diff === 0 || diff === 2) {
+                found = true;
                 let msg = `🏥 *साईदत्त क्लिनिक*\n\nनमस्कार *${p.name}*,\nआपल्याला आठवण करून देण्यात येते की आपली फॉलो-अप भेट दिनांक *${fDate(p.fup_date)}* रोजी आहे.`;
                 if(diff === 0) msg += `\n\n*कृपया आपली अपॉइंटमेंट बुक करा.*\n📞 बुकिंग नं: ${BOOKING_NOS}`;
                 msg += `\n\n- डॉ. रवींद्र घोंगडे`;
 
                 const color = (diff === 0) ? '#ff4757' : '#ffa500';
-                const waUrl = `https://wa.me/91${p.phone}?text=${encodeURIComponent(msg)}`;
+                const label = (diff === 0) ? '🔴 आज फॉलो-अप आहे' : '🟡 परवा फॉलो-अप आहे';
                 
                 cont.innerHTML += `
-                    <div class="patient-card" style="border-left: 10px solid ${color}; background: ${color}15;">
-                        <b style="color:${color}">${diff === 0 ? '🔴 आज फॉलो-अप' : '🟡 परवा फॉलो-अप'}</b><br>
-                        <b>${p.name}</b><br><small>तारीख: ${fDate(p.fup_date)}</small>
-                        <a href="${waUrl}" target="_blank" class="btn-wa-link" style="background:${color}">✅ व्हॉट्सॲप पाठवा</a>
+                    <div class="patient-card" style="border-left: 10px solid ${color}; background: ${color}10;">
+                        <b style="color:${color}">${label}</b><br>
+                        <b style="font-size:18px;">${p.name}</b><br>
+                        <small>Appointment Date: ${fDate(p.fup_date)}</small>
+                        <a href="https://wa.me/91${p.phone}?text=${encodeURIComponent(msg)}" target="_blank" class="btn-wa-link" style="background:${color}">WhatsApp Pathva</a>
                     </div>`;
             }
         });
+        if(!found) cont.innerHTML += "<p style='text-align:center;'>Kontahi reminder nahi.</p>";
     }
 
     function renderBroadcast() {
@@ -176,20 +189,21 @@
         let db = JSON.parse(localStorage.getItem(DB_KEY)) || [];
         const unique = []; const map = new Map();
         for (const item of db) { if(!map.has(item.phone)){ map.set(item.phone, true); unique.push(item); } }
-        cont.innerHTML = `<h4>एकूण: ${unique.length}</h4>`;
+        cont.innerHTML = `<h4>Total Patients: ${unique.length}</h4>`;
         unique.reverse().forEach(p => {
-            cont.innerHTML += `<div class="bc-item">
-                <span><b>${p.name}</b> (${p.phone})</span>
-                <button onclick="sendBC('${p.phone}', '${p.name}')" style="background:#25D366; color:white; border:none; padding:8px 15px; border-radius:5px;">पाठवा</button>
-            </div>`;
+            cont.innerHTML += `
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #eee; background:white; margin-bottom:5px; border-radius:8px;">
+                    <span><b>${p.name}</b><br><small>${p.phone}</small></span>
+                    <button onclick="sendBC('${p.phone}', '${p.name}')" style="background:#25D366; color:white; border:none; padding:8px 15px; border-radius:5px; font-weight:bold;">SEND</button>
+                </div>`;
         });
     }
 
     function sendBC(phone, name) {
         const txt = document.getElementById('bcMsg').value;
-        if(!txt) return alert("मेसेज लिहा!");
+        if(!txt) return alert("Message liha!");
         const msg = `🏥 *साईदत्त क्लिनिक*\n\nनमस्कार *${name}*,\n\n${txt}\n\n- डॉ. रवींद्र घोंगडे`;
-        window.location.href = `https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`;
+        window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`, '_blank');
     }
 
     function toggleCheck(id) {
@@ -200,11 +214,10 @@
     }
 
     function deleteRec(id) {
-        if(confirm("Delete?")) {
+        if(confirm("Delete patient?")) {
             let db = JSON.parse(localStorage.getItem(DB_KEY)) || [];
             localStorage.setItem(DB_KEY, JSON.stringify(db.filter(x => x.id !== id)));
             renderDateWise();
-            if(document.getElementById('broadcastTab').classList.contains('active-section')) renderBroadcast();
         }
     }
     renderDateWise();
