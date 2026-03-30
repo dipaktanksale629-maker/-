@@ -10,18 +10,18 @@
         .login-screen { position: fixed; inset: 0; background: var(--primary); display: flex; justify-content: center; align-items: center; z-index: 10000; }
         .login-box { background: white; padding: 30px; border-radius: 20px; width: 85%; max-width: 350px; text-align: center; }
         .container { display: none; max-width: 500px; margin: auto; padding: 15px; background: white; min-height: 100vh; }
-        input, textarea { width: 100%; padding: 12px; margin-top: 10px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; }
-        .btn { width: 100%; padding: 15px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; color: white; }
+        input, textarea { width: 100%; padding: 10px; margin-top: 8px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .btn { width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; color: white; }
         .btn-save { background: var(--secondary); }
-        .btn-booking { background: #075e54; margin-top: 15px; display: none; }
-        .card { border: 1px solid #ddd; padding: 15px; margin-top: 12px; border-radius: 15px; position: relative; background: #fff; transition: 0.3s; }
-        .card.completed { opacity: 0.4; filter: grayscale(1); }
-        .alert-yellow { border-left: 10px solid var(--yellow); background: #fffde7; }
-        .alert-red { border-left: 10px solid var(--red); background: #ffebee; }
-        .token { position: absolute; top: 12px; right: 12px; background: var(--primary); color: white; padding: 3px 8px; border-radius: 5px; font-size: 11px; }
-        .nav-bar { position: fixed; bottom: 0; width: 100%; max-width: 500px; display: flex; background: white; border-top: 2px solid #eee; }
+        .card { border: 1px solid #ddd; padding: 12px; margin-top: 10px; border-radius: 12px; background: #fff; position: relative; transition: 0.3s; }
+        .card.completed { opacity: 0.5; filter: grayscale(1); background: #f9f9f9; }
+        .alert-yellow { border-left: 8px solid var(--yellow); }
+        .alert-red { border-left: 8px solid var(--red); }
+        .nav-bar { position: fixed; bottom: 0; width: 100%; max-width: 500px; display: flex; background: white; border-top: 2px solid #eee; z-index: 100; }
         .nav-item { flex: 1; padding: 15px; text-align: center; cursor: pointer; font-weight: bold; color: #666; font-size: 13px; }
         .nav-item.active { color: var(--primary); background: #e8f0fe; border-top: 3px solid var(--primary); }
+        .hidden { display: none; }
+        .wa-btn { background: #25D366; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 12px; }
     </style>
 </head>
 <body>
@@ -38,7 +38,7 @@
 <div id="appPage" class="container">
     <div style="display:flex; justify-content:space-between; align-items:center;">
         <h3>साईदत्ता क्लिनिक</h3>
-        <button onclick="logout()" style="color:red; background:none; border:none; font-weight:bold; cursor:pointer;">Logout</button>
+        <button onclick="logout()" style="color:red; background:none; border:none; font-weight:bold;">Logout</button>
     </div>
 
     <div id="regSection">
@@ -51,10 +51,9 @@
         </div>
         <textarea id="pNotes" placeholder="तपासणी नोट्स / औषधे"></textarea>
         <button class="btn btn-save" onclick="saveData()">💾 डेटा सेव्ह करा</button>
-        <button id="bookingConfirmBtn" class="btn btn-booking" onclick="sendBookingMessage()">📲 बुकिंग कन्फर्मेशन पाठवा (WA)</button>
         
         <hr style="margin-top:20px;">
-        <h5>हालतीची नोंदणी (Recent)</h5>
+        <h5>हालतीची नोंदणी (Recent Patients)</h5>
         <div id="recentDisplay">लोड होत आहे...</div>
     </div>
 
@@ -64,7 +63,9 @@
     </div>
 
     <div id="broadcastSection" class="hidden">
-        <h4>📢 सर्व पेशंट लिस्ट (No Duplicates)</h4>
+        <h4>📢 ब्रॉडकास्ट मेसेज</h4>
+        <textarea id="broadcastMsg" placeholder="येथे मेसेज टाईप करा..."></textarea>
+        <p style="font-size: 11px; color: #666;">* खालील पेशंट निवडून 'WhatsApp' चिन्हावर क्लिक करा.</p>
         <div id="masterDisplay">लोड होत आहे...</div>
     </div>
 
@@ -77,14 +78,13 @@
 
 <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzg2zBV_rHpsV3IVhKix53bSNLHcI9o94aNq956Os0HEJXf0HqeH_Obb9d5tSr9SyoP/exec";
-    let currentPatient = null;
 
     function login() {
         const u = document.getElementById('uEmail').value;
         const p = document.getElementById('uPass').value;
-        if((u==="sai@gmail.com" && p==="sai123")) {
+        if(u==="sai@gmail.com" && p==="sai123") {
             localStorage.setItem("user", u); startApp();
-        } else { alert("Login Error!"); }
+        } else { alert("पासवर्ड चुकीचा आहे!"); }
     }
 
     function startApp() {
@@ -99,60 +99,78 @@
     function show(sec) {
         ['regSection', 'reminderSection', 'broadcastSection'].forEach(s => document.getElementById(s).style.display='none');
         ['n1', 'n2', 'n3'].forEach(n => document.getElementById(n).classList.remove('active'));
-        if(sec==='reg') { document.getElementById('regSection').style.display='block'; document.getElementById('n1').classList.add('active'); loadAllData(); }
-        if(sec==='reminder') { document.getElementById('reminderSection').style.display='block'; document.getElementById('n2').classList.add('active'); loadAllData(); }
-        if(sec==='broadcast') { document.getElementById('broadcastSection').style.display='block'; document.getElementById('n3').classList.add('active'); loadAllData(); }
-    }
-
-    async function saveData() {
-        currentPatient = {
-            action: "save", userId: localStorage.getItem("user"), id: Date.now(),
-            name: document.getElementById('pName').value, phone: document.getElementById('pPhone').value,
-            date: document.getElementById('pDate').value, time: document.getElementById('pTime').value,
-            notes: document.getElementById('pNotes').value, checked: false, fup_date: ""
-        };
-        if(!currentPatient.name) return alert("नाव आवश्यक!");
-        alert("डेटा सेव्ह झाला!");
-        document.getElementById('bookingConfirmBtn').style.display = 'block';
-        await fetch(SCRIPT_URL, {method:"POST", mode:"no-cors", body:JSON.stringify(currentPatient)});
+        if(sec==='reg') { document.getElementById('regSection').style.display='block'; document.getElementById('n1').classList.add('active'); }
+        if(sec==='reminder') { document.getElementById('reminderSection').style.display='block'; document.getElementById('n2').classList.add('active'); }
+        if(sec==='broadcast') { document.getElementById('broadcastSection').style.display='block'; document.getElementById('n3').classList.add('active'); }
         loadAllData();
     }
 
-    function sendBookingMessage() {
-        const msg = `नमस्ते ${currentPatient.name},\nतुमची साईदत्ता क्लिनिकमध्ये दिनांक ${currentPatient.date} रोजी वेळ ${currentPatient.time} वाजता अपॉइंटमेंट बुक झाली आहे. धन्यवाद!`;
-        window.open(`https://wa.me/91${currentPatient.phone}?text=${encodeURIComponent(msg)}`);
-        document.getElementById('bookingConfirmBtn').style.display = 'none';
+    async function saveData() {
+        const pName = document.getElementById('pName').value;
+        const pPhone = document.getElementById('pPhone').value;
+        const pDate = document.getElementById('pDate').value;
+        const pTime = document.getElementById('pTime').value;
+        const pNotes = document.getElementById('pNotes').value;
+
+        if(!pName || !pPhone) return alert("नाव आणि नंबर आवश्यक!");
+
+        const data = {
+            action: "save", userId: localStorage.getItem("user"), id: Date.now(),
+            name: pName, phone: pPhone, date: pDate, time: pTime, notes: pNotes
+        };
+
+        // Professional Booking Message
+        const msg = `🏥 *साईदत्ता क्लिनिक*\n\nनमस्ते ${pName},\nतुमची तपासणीची वेळ निश्चित झाली आहे.\n📅 तारीख: ${pDate}\n🕒 वेळ: ${pTime}\n\nकृपया वेळेवर उपस्थित राहावे. धन्यवाद!`;
+        
+        if(confirm("डेटा सेव्ह झाला! पेशंटला WhatsApp मेसेज पाठवायचा का?")) {
+            window.open(`https://wa.me/91${pPhone}?text=${encodeURIComponent(msg)}`);
+        }
+
+        await fetch(SCRIPT_URL, {method:"POST", mode:"no-cors", body:JSON.stringify(data)});
+        location.reload();
     }
 
     async function loadAllData() {
         const userId = localStorage.getItem("user");
         const resp = await fetch(`${SCRIPT_URL}?action=get&userId=${userId}`);
         const all = await resp.json();
-        const todayStr = new Date().toISOString().split('T')[0];
         const today = new Date(); today.setHours(0,0,0,0);
+        const todayStr = today.toISOString().split('T')[0];
 
-        // १. नोंदणी खालील रिसेंट डेटा (शेवटचे ५)
-        const recent = [...all].reverse().slice(0, 5);
-        document.getElementById('recentDisplay').innerHTML = recent.map(p => `
-            <div class="card">
-                <b>${p.name}</b><br><small>📅 ${p.date} | 🕒 ${p.time || '-'}</small>
-            </div>`).join('');
+        // १. नोंदणी खालील लिस्ट
+        document.getElementById('recentDisplay').innerHTML = all.slice(-5).reverse().map(p => `
+            <div class="card ${p.checked ? 'completed' : ''}">
+                <div style="display:flex; justify-content:space-between;">
+                    <b>${p.name}</b>
+                    <input type="checkbox" onclick="toggleCheck('${p.id}', this)" ${p.checked ? 'checked' : ''}>
+                </div>
+                <div style="font-size:12px; margin-top:5px;">
+                    📞 ${p.phone} | 🕒 ${p.time || '-'}<br>
+                    📝 Notes: ${p.notes || '-'}
+                </div>
+                <div style="margin-top:8px; border-top:1px solid #eee; padding-top:5px;">
+                    <label style="font-size:11px;">Update Follow-up:</label>
+                    <input type="date" value="${p.fup_date || ''}" onchange="updateFUP('${p.id}', this.value)" style="width:130px; padding:3px; font-size:11px;">
+                </div>
+            </div>
+        `).join('');
 
-        // २. रिमाइन्डर फिल्टर (फक्त आजचे Red आणि २ दिवसातले Yellow)
+        // २. रिमाइन्डर (Today & 2 Days Before)
         let remHTML = "";
         all.forEach(p => {
             if(!p.fup_date) return;
-            const fupDate = new Date(p.fup_date); fupDate.setHours(0,0,0,0);
-            const diff = Math.ceil((fupDate - today) / (86400000));
+            const fDate = new Date(p.fup_date); fDate.setHours(0,0,0,0);
+            const diff = Math.ceil((fDate - today) / (86400000));
             
             let aClass = "";
             if(p.fup_date === todayStr) aClass = "alert-red";
             else if(diff > 0 && diff <= 2) aClass = "alert-yellow";
 
             if(aClass !== "") {
+                const fMsg = `🏥 *साईदत्ता क्लिनिक रिमाइन्डर*\n\nनमस्ते ${p.name},\nतुमचा फॉलो-अप तपासणीचा दिनांक ${p.fup_date} हा आहे. कृपया वेळेवर यावे.\nधन्यवाद!`;
                 remHTML += `<div class="card ${aClass}">
-                    <b>${p.name}</b><br><small>📞 ${p.phone} | 🔔 Follow-up: ${p.fup_date}</small>
-                    <button class="btn" style="background:#25D366; padding:5px; font-size:12px;" onclick="window.open('https://wa.me/91${p.phone}?text=नमस्ते ${p.name}, तुमचा फॉलो-अप ${p.fup_date} ला आहे.')">Reminder पाठवा</button>
+                    <b>${p.name}</b><br><small>🔔 Follow-up: ${p.fup_date}</small>
+                    <button class="wa-btn" style="float:right" onclick="window.open('https://wa.me/91${p.phone}?text=${encodeURIComponent(fMsg)}')">Send WA</button>
                 </div>`;
             }
         });
@@ -160,19 +178,32 @@
 
         // ३. ब्रॉडकास्ट (Duplicate Filter)
         const unique = []; const seen = new Set();
-        all.sort((a,b) => b.id - a.id).forEach(p => {
+        all.forEach(p => {
             const key = p.name.trim().toLowerCase() + p.phone;
             if(!seen.has(key)) { seen.add(key); unique.push(p); }
         });
         document.getElementById('masterDisplay').innerHTML = unique.map(p => `
-            <div class="card"><b>${p.name}</b><br><small>📞 ${p.phone} | Last: ${p.date}</small></div>
+            <div class="card">
+                <b>${p.name}</b> <span style="font-size:11px; color:#666;">(${p.phone})</span>
+                <button class="wa-btn" style="float:right" onclick="sendBroadcast('${p.phone}')">Send</button>
+            </div>
         `).join('');
     }
 
-    async function markChecked(id, el) {
-        const data = { action: "check", id: id, status: el.checked };
-        await fetch(SCRIPT_URL, {method:"POST", mode:"no-cors", body:JSON.stringify(data)});
-        loadAllData();
+    async function updateFUP(id, date) {
+        await fetch(SCRIPT_URL, {method:"POST", mode:"no-cors", body:JSON.stringify({action:"updateFUP", id:id, fup_date:date})});
+        alert("फॉलो-अप तारीख अपडेट झाली!");
+    }
+
+    async function toggleCheck(id, el) {
+        el.parentElement.parentElement.classList.toggle('completed');
+        await fetch(SCRIPT_URL, {method:"POST", mode:"no-cors", body:JSON.stringify({action:"check", id:id, status:el.checked})});
+    }
+
+    function sendBroadcast(phone) {
+        const msg = document.getElementById('broadcastMsg').value;
+        if(!msg) return alert("आधी मेसेज टाईप करा!");
+        window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`);
     }
 
     function logout() { localStorage.clear(); location.reload(); }
