@@ -63,7 +63,7 @@
     </div>
 
     <div id="broadcastSection" class="hidden">
-        <h4>📢 ब्रॉडकास्ट (Duplicate Filtered)</h4>
+        <h4>📢 ब्रॉडकास्ट (Master List)</h4>
         <div id="masterDisplay">लोड होत आहे...</div>
     </div>
 
@@ -75,7 +75,7 @@
 </div>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxruQiU-bNCEaF1qkZvBBvyD5QN_Vj0BXkA0JNmEnPhwRG9jXK2mOXLZMXikPyzCADoUQ/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzg2zBV_rHpsV3IVhKix53bSNLHcI9o94aNq956Os0HEJXf0HqeH_Obb9d5tSr9SyoP/exec";
     let currentPatient = null;
 
     function login() {
@@ -123,6 +123,7 @@
         document.getElementById('bookingConfirmBtn').style.display = 'none';
         document.getElementById('pName').value = "";
         document.getElementById('pPhone').value = "";
+        document.getElementById('pNotes').value = "";
     }
 
     async function loadData() {
@@ -157,7 +158,7 @@
                         <input type="date" onchange="updateFUP('${p.id}', this.value)" value="${p.fup_date || ''}">
                     </div>
                     <div style="font-size:12px; margin-top:8px;">📞 ${p.phone} | 📝 ${p.notes}</div>
-                    <button class="btn btn-wa" style="width:auto; padding:5px 10px;" onclick="sendReminder('${p.phone}','${p.name}','${p.fup_date}')">Reminder पाठवा</button>
+                    <button class="btn btn-wa" style="width:auto; padding:5px 10px; background:#25D366; color:white; border-radius:5px; border:none; margin-top:5px; cursor:pointer;" onclick="sendReminder('${p.phone}','${p.name}','${p.fup_date}')">Reminder पाठवा</button>
                 </div>`;
             }
         });
