@@ -3,148 +3,165 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>साईदत्ता मल्टी-क्लिनिक सॉफ्टवेअर</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <title>साईदत्ता क्लिनिक - अल्टीमेट</title>
     <style>
-        :root { --primary: #1a73e8; --secondary: #28a745; --bg: #f8f9fa; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 0; }
-        .login-screen { position: fixed; width: 100%; height: 100%; background: var(--primary); display: flex; justify-content: center; align-items: center; z-index: 10000; }
-        .login-box { background: white; padding: 30px; border-radius: 20px; width: 85%; max-width: 350px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
-        .container { display: none; max-width: 500px; margin: auto; padding: 20px; background: white; min-height: 100vh; }
+        :root { --primary: #1a73e8; --secondary: #28a745; --yellow: #fff3cd; --red: #f8d7da; --bg: #f0f2f5; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding-bottom: 80px; }
+        .login-screen { position: fixed; inset: 0; background: var(--primary); display: flex; justify-content: center; align-items: center; z-index: 9999; }
+        .login-box { background: white; padding: 30px; border-radius: 20px; width: 85%; max-width: 350px; text-align: center; }
+        .container { display: none; max-width: 500px; margin: auto; padding: 15px; background: white; min-height: 100vh; }
         input, textarea, select { width: 100%; padding: 12px; margin-top: 10px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; }
-        .btn { width: 100%; padding: 15px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; margin-top: 15px; color: white; }
+        .btn { width: 100%; padding: 15px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; color: white; }
         .btn-save { background: var(--secondary); }
-        .btn-login { background: var(--primary); }
+        .btn-wa { background: #25D366; font-size: 12px; padding: 5px 10px; margin-top: 5px; }
+        .card { border: 1px solid #ddd; padding: 15px; margin-top: 10px; border-radius: 12px; position: relative; }
+        .alert-yellow { background: var(--yellow); border-left: 5px solid #ffc107; }
+        .alert-red { background: var(--red); border-left: 5px solid #dc3545; }
+        .token { position: absolute; top: 10px; right: 10px; background: var(--primary); color: white; padding: 2px 8px; border-radius: 5px; }
+        .nav-bar { position: fixed; bottom: 0; width: 100%; max-width: 500px; display: flex; background: white; border-top: 1px solid #ddd; }
+        .nav-item { flex: 1; padding: 15px; text-align: center; cursor: pointer; font-weight: bold; color: #666; }
+        .nav-item.active { color: var(--primary); background: #e8f0fe; }
         .hidden { display: none; }
-        .patient-card { border: 1px solid #eee; padding: 15px; margin-top: 10px; border-radius: 12px; position: relative; border-left: 5px solid var(--primary); }
-        .header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 2px solid #eee; }
     </style>
 </head>
 <body>
 
 <div id="loginPage" class="login-screen">
     <div class="login-box">
-        <h2 style="color: var(--primary);">🏥 क्लिनिक लॉगिन</h2>
-        <input type="email" id="userEmail" placeholder="तुमचा ईमेल आयडी">
-        <input type="password" id="userPass" placeholder="पासवर्ड">
-        <button class="btn btn-login" onclick="login()">प्रवेश करा</button>
-        <p style="font-size: 11px; color: #666; margin-top: 15px;">Admin द्वारे दिलेला आयडी वापरा.</p>
+        <h2>🏥 क्लिनिक लॉगिन</h2>
+        <input type="email" id="uEmail" placeholder="ईमेल">
+        <input type="password" id="uPass" placeholder="पासवर्ड">
+        <button class="btn" style="background:var(--primary)" onclick="login()">प्रवेश</button>
     </div>
 </div>
 
 <div id="appPage" class="container">
-    <div class="header">
-        <h3 id="clinicTitle" style="margin:0;">क्लिनिक नाव</h3>
-        <button onclick="logout()" style="color:red; background:none; border:none; font-weight:bold;">Logout</button>
+    <div style="display:flex; justify-content:space-between;">
+        <h3 id="cTitle">साईदत्ता क्लिनिक</h3>
+        <button onclick="logout()" style="border:none; background:none; color:red;">Logout</button>
     </div>
 
-    <div id="formSection" style="margin-top:20px;">
-        <input type="text" id="pName" placeholder="पेशंटचे पूर्ण नाव">
-        <input type="number" id="pPhone" placeholder="मोबाईल नंबर">
-        <input type="date" id="pDate">
-        <textarea id="pNotes" placeholder="तपासणी नोट्स (औषधे, लक्षणे)"></textarea>
-        <button class="btn btn-save" onclick="saveData()">💾 डेटा क्लाउडवर सेव्ह करा</button>
+    <div id="regSection">
+        <h4>📝 पेशंट नोंदणी (Direct Add)</h4>
+        <input type="text" id="pName" placeholder="पेशंटचे नाव">
+        <input type="number" id="pPhone" placeholder="WhatsApp नंबर">
+        <div style="display:flex; gap:5px;">
+            <input type="date" id="pDate" title="तपासणी तारीख">
+            <input type="date" id="fupDate" title="फॉलो-अप तारीख">
+        </div>
+        <textarea id="pNotes" placeholder="तपासणी नोट्स / औषधे"></textarea>
+        <button class="btn btn-save" onclick="saveData()">💾 सेव्ह करा</button>
     </div>
 
-    <div style="margin-top:30px;">
-        <h4>आजचे पेशंट:</h4>
+    <div id="listSection" class="hidden">
+        <h4>📋 आजचे पेशंट आणि अलर्ट्स</h4>
         <input type="date" id="filterDate" onchange="loadData()">
-        <div id="listDisplay" style="margin-top:15px;">माहिती लोड होत आहे...</div>
+        <div id="listDisplay">लोड होत आहे...</div>
+    </div>
+
+    <div id="broadcastSection" class="hidden">
+        <h4>📢 सर्व पेशंट मास्टर लिस्ट</h4>
+        <div id="masterDisplay">डेटा लोड होत आहे...</div>
+    </div>
+
+    <div class="nav-bar">
+        <div class="nav-item active" id="n1" onclick="show('reg')">नोंदणी</div>
+        <div class="nav-item" id="n2" onclick="show('list')">आजची लिस्ट</div>
+        <div class="nav-item" id="n3" onclick="show('broadcast')">ब्रॉडकास्ट</div>
     </div>
 </div>
 
 <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw_pDiZPZFfnUvlRGFxEj6B2uKuWgHIj4S4BbFw_y4c103HQqIK97wUkhR6rQ2FIKvrmQ/exec";
 
-    // १. लॉगिन सिस्टीम (तुम्ही इथे नवीन युजर्स वाढवू शकता)
     function login() {
-        const email = document.getElementById('userEmail').value;
-        const pass = document.getElementById('userPass').value;
-
-        const users = {
-            "sai@gmail.com": "sai123",
-            "test@gmail.com": "123"
-        };
-
-        if (users[email] && users[email] === pass) {
-            localStorage.setItem("clinic_user", email);
-            startApp();
-        } else {
-            alert("चुकीचा ईमेल किंवा पासवर्ड!");
-        }
+        const u = document.getElementById('uEmail').value;
+        const p = document.getElementById('uPass').value;
+        if((u==="sai@gmail.com" && p==="sai123") || (u==="test@gmail.com" && p==="123")) {
+            localStorage.setItem("user", u); startApp();
+        } else { alert("Error!"); }
     }
 
     function startApp() {
-        const user = localStorage.getItem("clinic_user");
-        if (user) {
+        const user = localStorage.getItem("user");
+        if(user) {
             document.getElementById('loginPage').classList.add('hidden');
-            document.getElementById('appPage').style.display = 'block';
-            document.getElementById('clinicTitle').innerText = user.split('@')[0].toUpperCase();
+            document.getElementById('appPage').style.display='block';
             document.getElementById('pDate').valueAsDate = new Date();
             document.getElementById('filterDate').valueAsDate = new Date();
             loadData();
         }
     }
 
-    function logout() {
-        localStorage.clear();
+    function show(sec) {
+        document.getElementById('regSection').classList.add('hidden');
+        document.getElementById('listSection').classList.add('hidden');
+        document.getElementById('broadcastSection').classList.add('hidden');
+        document.getElementById('n1').classList.remove('active');
+        document.getElementById('n2').classList.remove('active');
+        document.getElementById('n3').classList.remove('active');
+
+        if(sec==='reg') { document.getElementById('regSection').classList.remove('hidden'); document.getElementById('n1').classList.add('active'); }
+        if(sec==='list') { document.getElementById('listSection').classList.remove('hidden'); document.getElementById('n2').classList.add('active'); loadData(); }
+        if(sec==='broadcast') { document.getElementById('broadcastSection').classList.remove('hidden'); document.getElementById('n3').classList.add('active'); loadMaster(); }
+    }
+
+    async function saveData() {
+        const data = {
+            action: "save", userId: localStorage.getItem("user"), id: Date.now(),
+            name: document.getElementById('pName').value, phone: document.getElementById('pPhone').value,
+            date: document.getElementById('pDate').value, fup_date: document.getElementById('fupDate').value,
+            notes: document.getElementById('pNotes').value, checked: false
+        };
+        if(!data.name) return alert("नाव टाका!");
+        alert("डेटा सेव्ह होत आहे...");
+        await fetch(SCRIPT_URL, {method:"POST", mode:"no-cors", body:JSON.stringify(data)});
         location.reload();
     }
 
-    // २. डेटा सेव्ह करणे
-    async function saveData() {
-        const userId = localStorage.getItem("clinic_user");
-        const data = {
-            action: "save",
-            userId: userId,
-            id: Date.now(),
-            name: document.getElementById('pName').value,
-            phone: document.getElementById('pPhone').value,
-            date: document.getElementById('pDate').value,
-            notes: document.getElementById('pNotes').value
-        };
-
-        if(!data.name) { alert("नाव भरणे आवश्यक आहे!"); return; }
-
-        await fetch(SCRIPT_URL, {
-            method: "POST",
-            mode: "no-cors",
-            body: JSON.stringify(data)
-        });
-
-        alert("डेटा यशस्वीरित्या सेव्ह झाला!");
-        document.getElementById('pName').value = "";
-        document.getElementById('pPhone').value = "";
-        document.getElementById('pNotes').value = "";
-        loadData();
-    }
-
-    // ३. डेटा लोड करणे (फक्त स्वतःचा)
     async function loadData() {
-        const userId = localStorage.getItem("clinic_user");
-        const filterDate = document.getElementById('filterDate').value;
+        const userId = localStorage.getItem("user");
+        const fDate = document.getElementById('filterDate').value;
+        const resp = await fetch(`${SCRIPT_URL}?action=get&userId=${userId}`);
+        const all = await resp.json();
         const display = document.getElementById('listDisplay');
-        display.innerHTML = "लोड होत आहे...";
+        display.innerHTML = "";
 
-        try {
-            const resp = await fetch(`${SCRIPT_URL}?action=get&userId=${userId}`);
-            const allData = await resp.json();
-            
-            const filtered = allData.filter(item => item.date === filterDate);
-            
-            display.innerHTML = filtered.length ? "" : "या तारखेला पेशंट नाहीत.";
-            filtered.forEach(p => {
+        all.forEach((p, index) => {
+            const today = new Date(fDate);
+            const fup = new Date(p.fup_date);
+            const diff = (fup - today) / (1000 * 60 * 60 * 24);
+
+            let alertClass = "";
+            if(p.fup_date === fDate) alertClass = "alert-red";
+            else if(diff > 0 && diff <= 2) alertClass = "alert-yellow";
+
+            if(p.date === fDate || alertClass !== "") {
                 display.innerHTML += `
-                    <div class="patient-card">
-                        <b>${p.name}</b> (${p.phone})<br>
-                        <small>${p.notes || 'No notes'}</small>
-                    </div>`;
-            });
-        } catch (e) {
-            display.innerHTML = "डेटा लोड करताना एरर आली.";
-        }
+                <div class="card ${alertClass}">
+                    <div class="token">#${index+1}</div>
+                    <input type="checkbox" ${p.checked?'checked':''}> <b>${p.name}</b><br>
+                    <small>📞 ${p.phone} | 📅 F-Up: ${p.fup_date}</small><br>
+                    <button class="btn btn-wa" onclick="sendWA('${p.phone}','${p.name}','${p.fup_date}')">WhatsApp Reminder</button>
+                </div>`;
+            }
+        });
     }
 
+    async function loadMaster() {
+        const userId = localStorage.getItem("user");
+        const resp = await fetch(`${SCRIPT_URL}?action=get&userId=${userId}`);
+        const all = await resp.json();
+        const display = document.getElementById('masterDisplay');
+        display.innerHTML = all.map(p => `<div class="card"><b>${p.name}</b><br>${p.phone}<br><small>${p.date}</small></div>`).join('');
+    }
+
+    function sendWA(ph, nm, dt) {
+        const msg = `प्रिय ${nm},\nतुमची साईदत्ता क्लिनिकमधील पुढील तपासणीची तारीख ${dt} आहे. कृपया वेळेवर उपस्थित राहावे.\n- डॉ. साईदत्ता क्लिनिक`;
+        window.open(`https://wa.me/91${ph}?text=${encodeURIComponent(msg)}`);
+    }
+
+    function logout() { localStorage.clear(); location.reload(); }
     window.onload = startApp;
 </script>
 </body>
