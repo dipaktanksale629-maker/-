@@ -22,8 +22,6 @@
         .nav-bar { position: fixed; bottom: 0; width: 100%; max-width: 500px; display: flex; background: white; border-top: 2px solid #eee; }
         .nav-item { flex: 1; padding: 15px; text-align: center; cursor: pointer; font-weight: bold; color: #666; font-size: 13px; }
         .nav-item.active { color: var(--primary); background: #e8f0fe; border-top: 3px solid var(--primary); }
-        .fup-section { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px dashed #ccc; }
-        .card.completed .fup-section { display: block; }
     </style>
 </head>
 <body>
@@ -39,7 +37,7 @@
 
 <div id="appPage" class="container">
     <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h3 id="cTitle">साईदत्ता क्लिनिक</h3>
+        <h3>साईदत्ता क्लिनिक</h3>
         <button onclick="logout()" style="color:red; background:none; border:none; font-weight:bold; cursor:pointer;">Logout</button>
     </div>
 
@@ -54,16 +52,19 @@
         <textarea id="pNotes" placeholder="तपासणी नोट्स / औषधे"></textarea>
         <button class="btn btn-save" onclick="saveData()">💾 डेटा सेव्ह करा</button>
         <button id="bookingConfirmBtn" class="btn btn-booking" onclick="sendBookingMessage()">📲 बुकिंग कन्फर्मेशन पाठवा (WA)</button>
+        
+        <hr style="margin-top:20px;">
+        <h5>हालतीची नोंदणी (Recent)</h5>
+        <div id="recentDisplay">लोड होत आहे...</div>
     </div>
 
     <div id="reminderSection" class="hidden">
-        <h4>🔔 रिमाइन्डर (फॉलो-अप अलर्ट्स)</h4>
-        <input type="date" id="filterDate" onchange="loadData()">
-        <div id="listDisplay" style="margin-top:15px;">लोड होत आहे...</div>
+        <h4>🔔 आजचे आणि आगामी फॉलो-अप</h4>
+        <div id="reminderDisplay">फक्त रिमाइन्डर असलेले पेशंट लोड होत आहेत...</div>
     </div>
 
     <div id="broadcastSection" class="hidden">
-        <h4>📢 ब्रॉडकास्ट (Master List)</h4>
+        <h4>📢 सर्व पेशंट लिस्ट (No Duplicates)</h4>
         <div id="masterDisplay">लोड होत आहे...</div>
     </div>
 
@@ -81,7 +82,7 @@
     function login() {
         const u = document.getElementById('uEmail').value;
         const p = document.getElementById('uPass').value;
-        if((u==="sai@gmail.com" && p==="sai123") || (u==="test@gmail.com" && p==="123")) {
+        if((u==="sai@gmail.com" && p==="sai123")) {
             localStorage.setItem("user", u); startApp();
         } else { alert("Login Error!"); }
     }
@@ -91,17 +92,16 @@
             document.getElementById('loginPage').style.display='none';
             document.getElementById('appPage').style.display='block';
             document.getElementById('pDate').valueAsDate = new Date();
-            document.getElementById('filterDate').valueAsDate = new Date();
-            loadData();
+            loadAllData();
         }
     }
 
     function show(sec) {
         ['regSection', 'reminderSection', 'broadcastSection'].forEach(s => document.getElementById(s).style.display='none');
         ['n1', 'n2', 'n3'].forEach(n => document.getElementById(n).classList.remove('active'));
-        if(sec==='reg') { document.getElementById('regSection').style.display='block'; document.getElementById('n1').classList.add('active'); }
-        if(sec==='reminder') { document.getElementById('reminderSection').style.display='block'; document.getElementById('n2').classList.add('active'); loadData(); }
-        if(sec==='broadcast') { document.getElementById('broadcastSection').style.display='block'; document.getElementById('n3').classList.add('active'); loadMaster(); }
+        if(sec==='reg') { document.getElementById('regSection').style.display='block'; document.getElementById('n1').classList.add('active'); loadAllData(); }
+        if(sec==='reminder') { document.getElementById('reminderSection').style.display='block'; document.getElementById('n2').classList.add('active'); loadAllData(); }
+        if(sec==='broadcast') { document.getElementById('broadcastSection').style.display='block'; document.getElementById('n3').classList.add('active'); loadAllData(); }
     }
 
     async function saveData() {
@@ -115,85 +115,64 @@
         alert("डेटा सेव्ह झाला!");
         document.getElementById('bookingConfirmBtn').style.display = 'block';
         await fetch(SCRIPT_URL, {method:"POST", mode:"no-cors", body:JSON.stringify(currentPatient)});
+        loadAllData();
     }
 
     function sendBookingMessage() {
         const msg = `नमस्ते ${currentPatient.name},\nतुमची साईदत्ता क्लिनिकमध्ये दिनांक ${currentPatient.date} रोजी वेळ ${currentPatient.time} वाजता अपॉइंटमेंट बुक झाली आहे. धन्यवाद!`;
         window.open(`https://wa.me/91${currentPatient.phone}?text=${encodeURIComponent(msg)}`);
         document.getElementById('bookingConfirmBtn').style.display = 'none';
-        document.getElementById('pName').value = "";
-        document.getElementById('pPhone').value = "";
-        document.getElementById('pNotes').value = "";
     }
 
-    async function loadData() {
+    async function loadAllData() {
         const userId = localStorage.getItem("user");
-        const fDate = document.getElementById('filterDate').value;
-        const display = document.getElementById('listDisplay');
-        display.innerHTML = "लोड होत आहे...";
-
         const resp = await fetch(`${SCRIPT_URL}?action=get&userId=${userId}`);
         const all = await resp.json();
-        display.innerHTML = "";
+        const todayStr = new Date().toISOString().split('T')[0];
+        const today = new Date(); today.setHours(0,0,0,0);
 
-        let count = 0;
+        // १. नोंदणी खालील रिसेंट डेटा (शेवटचे ५)
+        const recent = [...all].reverse().slice(0, 5);
+        document.getElementById('recentDisplay').innerHTML = recent.map(p => `
+            <div class="card">
+                <b>${p.name}</b><br><small>📅 ${p.date} | 🕒 ${p.time || '-'}</small>
+            </div>`).join('');
+
+        // २. रिमाइन्डर फिल्टर (फक्त आजचे Red आणि २ दिवसातले Yellow)
+        let remHTML = "";
         all.forEach(p => {
-            const today = new Date(fDate); today.setHours(0,0,0,0);
-            const fup = p.fup_date ? new Date(p.fup_date) : null;
-            let alertClass = "";
-            if(p.fup_date === fDate) alertClass = "alert-red";
-            else if(fup && Math.ceil((fup - today)/86400000) <= 2 && Math.ceil((fup - today)/86400000) > 0) alertClass = "alert-yellow";
+            if(!p.fup_date) return;
+            const fupDate = new Date(p.fup_date); fupDate.setHours(0,0,0,0);
+            const diff = Math.ceil((fupDate - today) / (86400000));
+            
+            let aClass = "";
+            if(p.fup_date === todayStr) aClass = "alert-red";
+            else if(diff > 0 && diff <= 2) aClass = "alert-yellow";
 
-            if(p.date === fDate || alertClass !== "") {
-                count++;
-                display.innerHTML += `
-                <div id="card-${p.id}" class="card ${alertClass} ${p.checked ? 'completed' : ''}">
-                    <div class="token">#${count} | 🕒 ${p.time || '--:--'}</div>
-                    <div style="display:flex; align-items:center;">
-                        <input type="checkbox" onclick="markChecked('${p.id}', this)" ${p.checked ? 'checked' : ''} style="width:20px; height:20px;">
-                        <b style="margin-left:10px;">${p.name}</b>
-                    </div>
-                    <div class="fup-section">
-                        <label style="font-size:12px; color:red; font-weight:bold;">पुढील फॉलो-अप तारीख निवडा:</label>
-                        <input type="date" onchange="updateFUP('${p.id}', this.value)" value="${p.fup_date || ''}">
-                    </div>
-                    <div style="font-size:12px; margin-top:8px;">📞 ${p.phone} | 📝 ${p.notes}</div>
-                    <button class="btn btn-wa" style="width:auto; padding:5px 10px; background:#25D366; color:white; border-radius:5px; border:none; margin-top:5px; cursor:pointer;" onclick="sendReminder('${p.phone}','${p.name}','${p.fup_date}')">Reminder पाठवा</button>
+            if(aClass !== "") {
+                remHTML += `<div class="card ${aClass}">
+                    <b>${p.name}</b><br><small>📞 ${p.phone} | 🔔 Follow-up: ${p.fup_date}</small>
+                    <button class="btn" style="background:#25D366; padding:5px; font-size:12px;" onclick="window.open('https://wa.me/91${p.phone}?text=नमस्ते ${p.name}, तुमचा फॉलो-अप ${p.fup_date} ला आहे.')">Reminder पाठवा</button>
                 </div>`;
             }
         });
-    }
+        document.getElementById('reminderDisplay').innerHTML = remHTML || "सध्या कोणतेही रिमाइन्डर नाहीत.";
 
-    async function updateFUP(id, date) {
-        const data = { action: "updateFUP", id: id, fup_date: date };
-        await fetch(SCRIPT_URL, {method:"POST", mode:"no-cors", body:JSON.stringify(data)});
-        alert("फॉलो-अप अपडेट झाला!");
-        loadData();
-    }
-
-    async function markChecked(id, el) {
-        const data = { action: "check", id: id, status: el.checked };
-        el.parentElement.parentElement.classList.toggle('completed');
-        await fetch(SCRIPT_URL, {method:"POST", mode:"no-cors", body:JSON.stringify(data)});
-    }
-
-    function sendReminder(ph, nm, dt) {
-        if(!dt) return alert("आधी फॉलो-अप तारीख निवडा!");
-        const msg = `नमस्ते ${nm},\nतुमचा साईदत्ता क्लिनिकमध्ये फॉलो-अप दिनांक ${dt} ला आहे. कृपया वेळेवर यावे.`;
-        window.open(`https://wa.me/91${ph}?text=${encodeURIComponent(msg)}`);
-    }
-
-    async function loadMaster() {
-        const userId = localStorage.getItem("user");
-        const resp = await fetch(`${SCRIPT_URL}?action=get&userId=${userId}`);
-        const all = await resp.json();
-        const unique = [];
-        const seen = new Set();
+        // ३. ब्रॉडकास्ट (Duplicate Filter)
+        const unique = []; const seen = new Set();
         all.sort((a,b) => b.id - a.id).forEach(p => {
             const key = p.name.trim().toLowerCase() + p.phone;
             if(!seen.has(key)) { seen.add(key); unique.push(p); }
         });
-        document.getElementById('masterDisplay').innerHTML = unique.map(p => `<div class="card"><b>${p.name}</b><br>${p.phone}</div>`).join('');
+        document.getElementById('masterDisplay').innerHTML = unique.map(p => `
+            <div class="card"><b>${p.name}</b><br><small>📞 ${p.phone} | Last: ${p.date}</small></div>
+        `).join('');
+    }
+
+    async function markChecked(id, el) {
+        const data = { action: "check", id: id, status: el.checked };
+        await fetch(SCRIPT_URL, {method:"POST", mode:"no-cors", body:JSON.stringify(data)});
+        loadAllData();
     }
 
     function logout() { localStorage.clear(); location.reload(); }
