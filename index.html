@@ -22,7 +22,8 @@
         .nav-bar { position: fixed; bottom: 0; width: 100%; max-width: 500px; display: flex; background: white; border-top: 2px solid #eee; }
         .nav-item { flex: 1; padding: 15px; text-align: center; cursor: pointer; font-weight: bold; color: #666; font-size: 13px; }
         .nav-item.active { color: var(--primary); background: #e8f0fe; border-top: 3px solid var(--primary); }
-        .fup-input { width: auto; padding: 5px; font-size: 12px; margin-left: 10px; border: 1px solid var(--primary); }
+        .fup-section { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px dashed #ccc; }
+        .card.completed .fup-section { display: block; }
     </style>
 </head>
 <body>
@@ -56,13 +57,13 @@
     </div>
 
     <div id="reminderSection" class="hidden">
-        <h4>🔔 रिमाइन्डर आणि फॉलो-अप</h4>
+        <h4>🔔 रिमाइन्डर (फॉलो-अप अलर्ट्स)</h4>
         <input type="date" id="filterDate" onchange="loadData()">
         <div id="listDisplay" style="margin-top:15px;">लोड होत आहे...</div>
     </div>
 
     <div id="broadcastSection" class="hidden">
-        <h4>📢 ब्रॉडकास्ट (Master List)</h4>
+        <h4>📢 ब्रॉडकास्ट (Duplicate Filtered)</h4>
         <div id="masterDisplay">लोड होत आहे...</div>
     </div>
 
@@ -74,7 +75,7 @@
 </div>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw_pDiZPZFfnUvlRGFxEj6B2uKuWgHIj4S4BbFw_y4c103HQqIK97wUkhR6rQ2FIKvrmQ/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxruQiU-bNCEaF1qkZvBBvyD5QN_Vj0BXkA0JNmEnPhwRG9jXK2mOXLZMXikPyzCADoUQ/exec";
     let currentPatient = null;
 
     function login() {
@@ -82,7 +83,7 @@
         const p = document.getElementById('uPass').value;
         if((u==="sai@gmail.com" && p==="sai123") || (u==="test@gmail.com" && p==="123")) {
             localStorage.setItem("user", u); startApp();
-        } else { alert("पासवर्ड चुकीचा आहे!"); }
+        } else { alert("Login Error!"); }
     }
 
     function startApp() {
@@ -120,7 +121,8 @@
         const msg = `नमस्ते ${currentPatient.name},\nतुमची साईदत्ता क्लिनिकमध्ये दिनांक ${currentPatient.date} रोजी वेळ ${currentPatient.time} वाजता अपॉइंटमेंट बुक झाली आहे. धन्यवाद!`;
         window.open(`https://wa.me/91${currentPatient.phone}?text=${encodeURIComponent(msg)}`);
         document.getElementById('bookingConfirmBtn').style.display = 'none';
-        location.reload();
+        document.getElementById('pName').value = "";
+        document.getElementById('pPhone').value = "";
     }
 
     async function loadData() {
@@ -139,20 +141,23 @@
             const fup = p.fup_date ? new Date(p.fup_date) : null;
             let alertClass = "";
             if(p.fup_date === fDate) alertClass = "alert-red";
-            else if(fup && Math.ceil((fup - today)/(86400000)) <= 2 && Math.ceil((fup - today)/(86400000)) > 0) alertClass = "alert-yellow";
+            else if(fup && Math.ceil((fup - today)/86400000) <= 2 && Math.ceil((fup - today)/86400000) > 0) alertClass = "alert-yellow";
 
             if(p.date === fDate || alertClass !== "") {
                 count++;
                 display.innerHTML += `
-                <div class="card ${alertClass} ${p.checked ? 'completed' : ''}">
-                    <div class="token">Token #${count} | 🕒 ${p.time || '--:--'}</div>
+                <div id="card-${p.id}" class="card ${alertClass} ${p.checked ? 'completed' : ''}">
+                    <div class="token">#${count} | 🕒 ${p.time || '--:--'}</div>
                     <div style="display:flex; align-items:center;">
-                        <input type="checkbox" onclick="markChecked('${p.id}', this)" ${p.checked ? 'checked' : ''}>
+                        <input type="checkbox" onclick="markChecked('${p.id}', this)" ${p.checked ? 'checked' : ''} style="width:20px; height:20px;">
                         <b style="margin-left:10px;">${p.name}</b>
-                        <input type="date" class="fup-input" onchange="updateFUP('${p.id}', this.value)" value="${p.fup_date || ''}" title="पुढील फॉलो-अप">
                     </div>
-                    <div style="font-size:12px; margin-top:10px;">📞 ${p.phone} | 📝 ${p.notes}</div>
-                    <button class="btn btn-wa" onclick="sendReminder('${p.phone}','${p.name}','${p.fup_date}')">Reminder पाठवा</button>
+                    <div class="fup-section">
+                        <label style="font-size:12px; color:red; font-weight:bold;">पुढील फॉलो-अप तारीख निवडा:</label>
+                        <input type="date" onchange="updateFUP('${p.id}', this.value)" value="${p.fup_date || ''}">
+                    </div>
+                    <div style="font-size:12px; margin-top:8px;">📞 ${p.phone} | 📝 ${p.notes}</div>
+                    <button class="btn btn-wa" style="width:auto; padding:5px 10px;" onclick="sendReminder('${p.phone}','${p.name}','${p.fup_date}')">Reminder पाठवा</button>
                 </div>`;
             }
         });
@@ -162,6 +167,7 @@
         const data = { action: "updateFUP", id: id, fup_date: date };
         await fetch(SCRIPT_URL, {method:"POST", mode:"no-cors", body:JSON.stringify(data)});
         alert("फॉलो-अप अपडेट झाला!");
+        loadData();
     }
 
     async function markChecked(id, el) {
@@ -171,6 +177,7 @@
     }
 
     function sendReminder(ph, nm, dt) {
+        if(!dt) return alert("आधी फॉलो-अप तारीख निवडा!");
         const msg = `नमस्ते ${nm},\nतुमचा साईदत्ता क्लिनिकमध्ये फॉलो-अप दिनांक ${dt} ला आहे. कृपया वेळेवर यावे.`;
         window.open(`https://wa.me/91${ph}?text=${encodeURIComponent(msg)}`);
     }
@@ -179,11 +186,10 @@
         const userId = localStorage.getItem("user");
         const resp = await fetch(`${SCRIPT_URL}?action=get&userId=${userId}`);
         const all = await resp.json();
-        // Duplicate Filter
         const unique = [];
         const seen = new Set();
-        all.forEach(p => {
-            const key = p.name + p.phone;
+        all.sort((a,b) => b.id - a.id).forEach(p => {
+            const key = p.name.trim().toLowerCase() + p.phone;
             if(!seen.has(key)) { seen.add(key); unique.push(p); }
         });
         document.getElementById('masterDisplay').innerHTML = unique.map(p => `<div class="card"><b>${p.name}</b><br>${p.phone}</div>`).join('');
