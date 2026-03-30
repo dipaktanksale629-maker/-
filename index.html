@@ -21,7 +21,8 @@
         .nav-item { flex: 1; padding: 15px; text-align: center; cursor: pointer; font-weight: bold; color: #666; font-size: 13px; }
         .nav-item.active { color: var(--primary); background: #e8f0fe; border-top: 3px solid var(--primary); }
         .hidden { display: none; }
-        .wa-btn { background: #25D366; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 12px; }
+        .wa-btn { background: #25D366; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 11px; }
+        .date-header { background: #e8f0fe; padding: 10px; border-radius: 10px; margin-top: 20px; border-left: 5px solid var(--primary); }
     </style>
 </head>
 <body>
@@ -52,20 +53,24 @@
         <textarea id="pNotes" placeholder="तपासणी नोट्स / औषधे"></textarea>
         <button class="btn btn-save" onclick="saveData()">💾 डेटा सेव्ह करा</button>
         
-        <hr style="margin-top:20px;">
-        <h5>हालतीची नोंदणी (Recent Patients)</h5>
+        <div class="date-header">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <b id="displayDateText">तारीख लोड होत आहे...</b>
+                <input type="date" id="listViewDate" onchange="loadAllData()" style="width:40%; margin-top:0; padding:5px;">
+            </div>
+            <div id="patientCountDisplay" style="font-size:14px; color:var(--primary); font-weight:bold; margin-top:5px;">एकूण पेशंट: 0</div>
+        </div>
         <div id="recentDisplay">लोड होत आहे...</div>
     </div>
 
     <div id="reminderSection" class="hidden">
         <h4>🔔 आजचे आणि आगामी फॉलो-अप</h4>
-        <div id="reminderDisplay">फक्त रिमाइन्डर असलेले पेशंट लोड होत आहेत...</div>
+        <div id="reminderDisplay">लोड होत आहे...</div>
     </div>
 
     <div id="broadcastSection" class="hidden">
         <h4>📢 ब्रॉडकास्ट मेसेज</h4>
         <textarea id="broadcastMsg" placeholder="येथे मेसेज टाईप करा..."></textarea>
-        <p style="font-size: 11px; color: #666;">* खालील पेशंट निवडून 'WhatsApp' चिन्हावर क्लिक करा.</p>
         <div id="masterDisplay">लोड होत आहे...</div>
     </div>
 
@@ -92,6 +97,7 @@
             document.getElementById('loginPage').style.display='none';
             document.getElementById('appPage').style.display='block';
             document.getElementById('pDate').valueAsDate = new Date();
+            document.getElementById('listViewDate').valueAsDate = new Date();
             loadAllData();
         }
     }
@@ -119,29 +125,36 @@
             name: pName, phone: pPhone, date: pDate, time: pTime, notes: pNotes
         };
 
-        // Professional Booking Message
-        const msg = `🏥 *साईदत्ता क्लिनिक*\n\nनमस्ते ${pName},\nतुमची तपासणीची वेळ निश्चित झाली आहे.\n📅 तारीख: ${pDate}\n🕒 वेळ: ${pTime}\n\nकृपया वेळेवर उपस्थित राहावे. धन्यवाद!`;
+        const msg = `🏥 *साईदत्ता क्लिनिक*\n\nनमस्ते ${pName},\nतुमची तपासणी निश्चित झाली आहे.\n📅 तारीख: ${pDate}\n🕒 वेळ: ${pTime}\n\nधन्यवाद!`;
         
-        if(confirm("डेटा सेव्ह झाला! पेशंटला WhatsApp मेसेज पाठवायचा का?")) {
+        if(confirm("डेटा सेव्ह झाला! WhatsApp पाठवायचा का?")) {
             window.open(`https://wa.me/91${pPhone}?text=${encodeURIComponent(msg)}`);
         }
 
         await fetch(SCRIPT_URL, {method:"POST", mode:"no-cors", body:JSON.stringify(data)});
-        location.reload();
+        document.getElementById('pName').value = "";
+        document.getElementById('pPhone').value = "";
+        document.getElementById('pNotes').value = "";
+        loadAllData();
     }
 
     async function loadAllData() {
         const userId = localStorage.getItem("user");
+        const selectedDate = document.getElementById('listViewDate').value;
+        document.getElementById('displayDateText').innerText = "तारीख: " + selectedDate;
+        
         const resp = await fetch(`${SCRIPT_URL}?action=get&userId=${userId}`);
         const all = await resp.json();
-        const today = new Date(); today.setHours(0,0,0,0);
-        const todayStr = today.toISOString().split('T')[0];
+        const todayStr = new Date().toISOString().split('T')[0];
 
-        // १. नोंदणी खालील लिस्ट
-        document.getElementById('recentDisplay').innerHTML = all.slice(-5).reverse().map(p => `
+        // १. नोंदणी खालील तारीखानुसार लिस्ट आणि काऊंट
+        const filteredPatients = all.filter(p => p.date === selectedDate);
+        document.getElementById('patientCountDisplay').innerText = `एकूण पेशंट: ${filteredPatients.length}`;
+        
+        document.getElementById('recentDisplay').innerHTML = filteredPatients.reverse().map((p, index) => `
             <div class="card ${p.checked ? 'completed' : ''}">
                 <div style="display:flex; justify-content:space-between;">
-                    <b>${p.name}</b>
+                    <b>#${filteredPatients.length - index} ${p.name}</b>
                     <input type="checkbox" onclick="toggleCheck('${p.id}', this)" ${p.checked ? 'checked' : ''}>
                 </div>
                 <div style="font-size:12px; margin-top:5px;">
@@ -150,49 +163,37 @@
                 </div>
                 <div style="margin-top:8px; border-top:1px solid #eee; padding-top:5px;">
                     <label style="font-size:11px;">Update Follow-up:</label>
-                    <input type="date" value="${p.fup_date || ''}" onchange="updateFUP('${p.id}', this.value)" style="width:130px; padding:3px; font-size:11px;">
+                    <input type="date" value="${p.fup_date || ''}" onchange="updateFUP('${p.id}', this.value)" style="width:120px; padding:3px; font-size:11px;">
                 </div>
             </div>
-        `).join('');
+        `).join('') || "<center><br>या तारखेला कोणतेही पेशंट नाहीत.</center>";
 
-        // २. रिमाइन्डर (Today & 2 Days Before)
+        // २. रिमाइन्डर
         let remHTML = "";
         all.forEach(p => {
             if(!p.fup_date) return;
-            const fDate = new Date(p.fup_date); fDate.setHours(0,0,0,0);
-            const diff = Math.ceil((fDate - today) / (86400000));
-            
-            let aClass = "";
-            if(p.fup_date === todayStr) aClass = "alert-red";
-            else if(diff > 0 && diff <= 2) aClass = "alert-yellow";
-
+            const diff = Math.ceil((new Date(p.fup_date) - new Date().setHours(0,0,0,0)) / 86400000);
+            let aClass = (p.fup_date === todayStr) ? "alert-red" : (diff > 0 && diff <= 2 ? "alert-yellow" : "");
             if(aClass !== "") {
-                const fMsg = `🏥 *साईदत्ता क्लिनिक रिमाइन्डर*\n\nनमस्ते ${p.name},\nतुमचा फॉलो-अप तपासणीचा दिनांक ${p.fup_date} हा आहे. कृपया वेळेवर यावे.\nधन्यवाद!`;
-                remHTML += `<div class="card ${aClass}">
-                    <b>${p.name}</b><br><small>🔔 Follow-up: ${p.fup_date}</small>
-                    <button class="wa-btn" style="float:right" onclick="window.open('https://wa.me/91${p.phone}?text=${encodeURIComponent(fMsg)}')">Send WA</button>
-                </div>`;
+                const fMsg = `🏥 *साईदत्ता क्लिनिक*\nनमस्ते ${p.name}, तुमचा फॉलो-अप ${p.fup_date} ला आहे.`;
+                remHTML += `<div class="card ${aClass}"><b>${p.name}</b><br><small>🔔 Follow-up: ${p.fup_date}</small>
+                <button class="wa-btn" style="float:right" onclick="window.open('https://wa.me/91${p.phone}?text=${encodeURIComponent(fMsg)}')">Send WA</button></div>`;
             }
         });
-        document.getElementById('reminderDisplay').innerHTML = remHTML || "सध्या कोणतेही रिमाइन्डर नाहीत.";
+        document.getElementById('reminderDisplay').innerHTML = remHTML || "रिमाइन्डर नाहीत.";
 
-        // ३. ब्रॉडकास्ट (Duplicate Filter)
+        // ३. ब्रॉडकास्ट
         const unique = []; const seen = new Set();
-        all.forEach(p => {
-            const key = p.name.trim().toLowerCase() + p.phone;
-            if(!seen.has(key)) { seen.add(key); unique.push(p); }
-        });
+        all.forEach(p => { if(!seen.has(p.name + p.phone)) { seen.add(p.name + p.phone); unique.push(p); } });
         document.getElementById('masterDisplay').innerHTML = unique.map(p => `
-            <div class="card">
-                <b>${p.name}</b> <span style="font-size:11px; color:#666;">(${p.phone})</span>
-                <button class="wa-btn" style="float:right" onclick="sendBroadcast('${p.phone}')">Send</button>
-            </div>
+            <div class="card"><b>${p.name}</b> <button class="wa-btn" style="float:right" onclick="sendBroadcast('${p.phone}')">Send</button></div>
         `).join('');
     }
 
     async function updateFUP(id, date) {
         await fetch(SCRIPT_URL, {method:"POST", mode:"no-cors", body:JSON.stringify({action:"updateFUP", id:id, fup_date:date})});
         alert("फॉलो-अप तारीख अपडेट झाली!");
+        loadAllData();
     }
 
     async function toggleCheck(id, el) {
@@ -202,7 +203,7 @@
 
     function sendBroadcast(phone) {
         const msg = document.getElementById('broadcastMsg').value;
-        if(!msg) return alert("आधी मेसेज टाईप करा!");
+        if(!msg) return alert("मेसेज टाईप करा!");
         window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`);
     }
 
