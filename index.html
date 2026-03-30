@@ -22,7 +22,7 @@
         .nav-item.active { color: var(--primary); background: #e8f0fe; border-top: 3px solid var(--primary); }
         .wa-btn { background: #25D366; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold; }
         .edit-btn { background: #1a73e8; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 10px; cursor: pointer; margin-left: 5px; }
-        .fup-date-text { font-size: 18px; font-weight: bold; color: #d32f2f; }
+        .fup-date-text { font-size: 18px; font-weight: bold; color: #d32f2f; display: block; margin-top: 5px; }
         .date-header { background: #e8f0fe; padding: 12px; border-radius: 10px; margin-top: 20px; border-left: 5px solid var(--primary); }
         .hidden { display: none; }
     </style>
@@ -60,7 +60,7 @@
         
         <div class="date-header">
             <div style="display:flex; justify-content:space-between;">
-                <b id="displayDateText">Date: --/--/----</b>
+                <b id="displayDateText">तारीख: --/--/----</b>
                 <input type="date" id="listViewDate" onchange="loadAllData()" style="width:40%; margin:0; padding:5px;">
             </div>
             <div id="patientCountDisplay" style="font-size:14px; font-weight:bold; color:var(--primary); margin-top:5px;">एकूण पेशंट: 0</div>
@@ -88,7 +88,7 @@
 </div>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzg2zBV_rHpsV3IVhKix53bSNLHcI9o94aNq956Os0HEJXf0HqeH_Obb9d5tSr9SyoP/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwPJV11JFfuMne_9-d1vnHQ9Si6azxyOtgePCUs8hnXZQx5Z6z0ukXy0zko0BMGN_xI/exec";
     const clinicFullAddress = "साईदत्त क्लिनिक, साई गणेश हॉस्पिटल जवळ, मार्केट यार्ड, राधिका रोड, सातारा.";
     const opdContacts = "9604174209 / 0216238539";
     let allPatients = [];
@@ -103,7 +103,7 @@
         const u = document.getElementById('uEmail').value;
         const p = document.getElementById('uPass').value;
         if(u==="sai@gmail.com" && p==="sai123") { localStorage.setItem("user", u); startApp(); }
-        else { alert("पासवर्ड चुकीचा आहे!"); }
+        else { alert("लॉगिन तपशील तपासा!"); }
     }
 
     function startApp() {
@@ -189,7 +189,6 @@
         const today = new Date(); today.setHours(0,0,0,0);
         const todayStr = today.toISOString().split('T')[0];
 
-        // १. नोंदणी लिस्ट (Last Patient at Bottom)
         const filtered = allPatients.filter(p => p.date === selDate);
         document.getElementById('patientCountDisplay').innerText = `एकूण पेशंट: ${filtered.length}`;
         document.getElementById('recentDisplay').innerHTML = filtered.map((p, i) => `
@@ -209,7 +208,6 @@
             </div>
         `).join('') || "<center><br>डेटा उपलब्ध नाही.</center>";
 
-        // २. रिमाइन्डर विभाग (Sorted: Red then Yellow)
         let redRem = []; let yellowRem = [];
         allPatients.forEach(p => {
             if(!p.fup_date) return;
@@ -218,9 +216,8 @@
             const fMsg = `🏥 *साईदत्त क्लिनिक - आरोग्य स्मरण* 🔔\n\nप्रिय *${p.name}*,\nआपला फॉलो-अप उद्या *${formatDate(p.fup_date)}* रोजी आहे. 🩺\n\n👨‍⚕️ *डॉ. रवींद्र घोंगडे*\n📍 ${clinicFullAddress}\n📞 *संपर्क:* ${opdContacts}\n\n*"वेळेवर तपासणी, आरोग्याची खात्री!"* ✅`;
             
             const cardHTML = `<div class="card ${p.fup_date===todayStr?'alert-red':'alert-yellow'}">
-                <b>${p.name}</b> <br>
+                <b>${p.name}</b> <button class="wa-btn" style="float:right" onclick="window.open('https://wa.me/91${p.phone}?text=${encodeURIComponent(fMsg)}')">मेसेज</button>
                 <span class="fup-date-text">📅 ${formatDate(p.fup_date)}</span>
-                <button class="wa-btn" style="float:right" onclick="window.open('https://wa.me/91${p.phone}?text=${encodeURIComponent(fMsg)}')">मेसेज</button>
             </div>`;
 
             if(p.fup_date === todayStr) redRem.push(cardHTML);
@@ -228,13 +225,12 @@
         });
         document.getElementById('reminderDisplay').innerHTML = redRem.concat(yellowRem).join('') || "पुढील २ दिवसात फॉलो-अप नाहीत.";
 
-        // ३. ब्रॉडकास्ट
         const unique = []; const seen = new Set();
         allPatients.forEach(p => { if(!seen.has(p.name+p.phone)){ seen.add(p.name+p.phone); unique.push(p); } });
         document.getElementById('masterDisplay').innerHTML = unique.map(p => `<div class="card"><b>${p.name}</b> (${p.phone}) <button class="wa-btn" style="float:right" onclick="sendBroadcast('${p.phone}')">Send</button></div>`).join('');
     }
 
-    async function updateFUP(id, date) { await fetch(SCRIPT_URL, {method:"POST", mode:"no-cors", body:JSON.stringify({action:"updateFUP", id:id, fup_date:date})}); alert("फॉलो-अप तारीख अपडेट झाली!"); loadAllData(); }
+    async function updateFUP(id, date) { await fetch(SCRIPT_URL, {method:"POST", mode:"no-cors", body:JSON.stringify({action:"updateFUP", id:id, fup_date:date})}); alert("तारीख अपडेट झाली!"); loadAllData(); }
     async function toggleCheck(id, el) { el.parentElement.parentElement.classList.toggle('completed'); await fetch(SCRIPT_URL, {method:"POST", mode:"no-cors", body:JSON.stringify({action:"check", id:id, status:el.checked})}); }
     function sendBroadcast(phone) { const msg = document.getElementById('broadcastMsg').value; if(!msg) return alert("मेसेज टाईप करा!"); window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`); }
     function logout() { localStorage.clear(); location.reload(); }
