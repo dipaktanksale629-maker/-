@@ -11,15 +11,14 @@
         input, textarea { width: 100%; padding: 12px; margin-top: 8px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
         .btn { width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; color: white; }
         .btn-save { background: var(--secondary); }
-        .card { border: 1px solid #ddd; padding: 15px; margin-top: 10px; border-radius: 12px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .alert-red { border-left: 8px solid #d32f2f; background-color: #ffebf0; }
+        .card { border: 1px solid #ddd; padding: 15px; margin-top: 10px; border-radius: 12px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: relative; }
+        .alert-red { border-left: 8px solid #d32f2f; background-color: #fff5f5; }
         .nav-bar { position: fixed; bottom: 0; width: 100%; max-width: 500px; display: flex; background: white; border-top: 2px solid #eee; z-index: 100; }
         .nav-item { flex: 1; padding: 15px; text-align: center; cursor: pointer; font-weight: bold; color: #666; font-size: 13px; }
         .nav-item.active { color: var(--primary); background: #e8f0fe; border-top: 3px solid var(--primary); }
         .wa-btn { background: #25D366; color: white; border: none; padding: 8px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; width: 100%; margin-top: 10px; }
-        .edit-btn { background: var(--primary); color: white; border: none; padding: 5px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; float: right; font-weight: bold; }
+        .edit-btn { background: var(--primary); color: white; border: none; padding: 5px 12px; border-radius: 6px; font-size: 11px; cursor: pointer; float: right; }
         .hidden { display: none; }
-        .fup-date-input { width: 130px; padding: 3px; font-size: 11px; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -51,14 +50,13 @@
     </div>
 
     <div id="reminderSection" class="hidden">
-        <h4>🔔 फॉलो-अप रिमाइन्डर (आजचे)</h4>
+        <h4>🔔 आजचे फॉलो-अप रिमाइन्डर</h4>
         <div id="reminderDisplay">लोड होत आहे...</div>
     </div>
 
     <div id="broadcastSection" class="hidden">
         <h4>📢 ब्रॉडकास्ट मेसेज</h4>
-        <textarea id="broadcastMsg" placeholder="तुमचा मेसेज इथे टाईप करा..."></textarea>
-        <p style="font-size: 11px; color: #666;">* खालील बटन दाबल्यावर मेसेजसह पेशंटचे WhatsApp चॅट उघडेल.</p>
+        <textarea id="broadcastMsg" placeholder="मेसेज इथे टाईप करा..."></textarea>
         <div id="masterDisplay">लोड होत आहे...</div>
     </div>
 
@@ -77,9 +75,7 @@
         document.getElementById('regSection').classList.add('hidden');
         document.getElementById('reminderSection').classList.add('hidden');
         document.getElementById('broadcastSection').classList.add('hidden');
-        document.getElementById('n1').classList.remove('active');
-        document.getElementById('n2').classList.remove('active');
-        document.getElementById('n3').classList.remove('active');
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
 
         document.getElementById(tab + 'Section').classList.remove('hidden');
         document.getElementById(tab === 'reg' ? 'n1' : (tab === 'reminder' ? 'n2' : 'n3')).classList.add('active');
@@ -87,23 +83,36 @@
     }
 
     async function saveData() {
-        const id = document.getElementById('editingId').value || Date.now().toString();
+        const pName = document.getElementById('pName').value;
+        const pPhone = document.getElementById('pPhone').value;
+        const pDate = document.getElementById('pDate').value;
+        const pTime = document.getElementById('pTime').value;
+
+        if(!pName || !pPhone) return alert("नाव आणि नंबर आवश्यक!");
+
         const d = {
             action: "save",
-            id: id,
-            name: document.getElementById('pName').value,
-            phone: document.getElementById('pPhone').value,
+            id: document.getElementById('editingId').value || Date.now().toString(),
+            name: pName,
+            phone: pPhone,
             address: document.getElementById('pAddress').value,
-            date: document.getElementById('pDate').value,
-            time: document.getElementById('pTime').value,
+            date: pDate,
+            time: pTime,
             notes: document.getElementById('pNotes').value,
             userId: "sai@gmail.com"
         };
 
-        if(!d.name || !d.phone) return alert("नाव आणि नंबर भरा!");
         document.getElementById('saveBtn').innerText = "सेव्ह होत आहे...";
         await fetch(SCRIPT_URL, {method:"POST", mode:"no-cors", body:JSON.stringify(d)});
-        alert("डेटा सेव्ह झाला!");
+        
+        // डेटा सेव्ह झाल्यावर मेसेज
+        alert("डेटा यशस्वीरित्या सेव्ह झाला! ✅");
+        
+        // WhatsApp मेसेज पाठवण्यासाठी विचारणा
+        if(confirm("पेशंटला WhatsApp मेसेज पाठवायचा का?")) {
+            sendWA(pName, pPhone, pDate, pTime);
+        }
+
         cancelEdit();
         loadAllData();
     }
@@ -112,48 +121,44 @@
         const resp = await fetch(`${SCRIPT_URL}?action=get`);
         allPatients = await resp.json();
         
-        // १. रजिस्ट्रेशन लिस्ट अपडेट
+        // १. रजिस्ट्रेशन लिस्ट
         const selDate = document.getElementById('listViewDate').value;
         const filtered = allPatients.filter(p => p.date === selDate);
         document.getElementById('recentDisplay').innerHTML = filtered.map(p => `
             <div class="card">
                 <button class="edit-btn" onclick="editPatient('${p.id}')">Edit</button>
-                <b>${p.name}</b>
-                <div style="font-size:12px; color:#555; margin-top:5px;">
-                    📞 ${p.phone} | 🕒 ${p.time || '--'}<br>
-                    📍 ${p.address || '-'}
+                <b>${p.name}</b><br>
+                <small>📞 ${p.phone} | 🕒 ${p.time || '--'}</small>
+                <div style="margin-top:8px;">
+                    <span style="font-size:10px;">फॉलो-अप तारीख सेट करा:</span>
+                    <input type="date" value="${p.fup_date || ''}" onchange="updateFUP('${p.id}', this.value)" style="width:110px; padding:2px; font-size:11px;">
                 </div>
-                <div style="border-top:1px solid #eee; margin-top:8px; padding-top:8px;">
-                    <span style="font-size:11px;">फॉलो-अप तारीख:</span>
-                    <input type="date" class="fup-date-input" value="${p.fup_date || ''}" onchange="updateFUP('${p.id}', this.value)">
-                </div>
-                <button class="wa-btn" onclick="sendWA('${p.name}','${p.phone}','${p.date}','${p.time}')">💬 WhatsApp मेसेज पाठवा</button>
+                <button class="wa-btn" onclick="sendWA('${p.name}','${p.phone}','${p.date}','${p.time}')">💬 मेसेज पाठवा</button>
             </div>
         `).join('') || "<center><br>डेटा नाही.</center>";
 
-        // २. रिमाइन्डर लिस्ट अपडेट
+        // २. रिमाइन्डर लिस्ट
         const today = new Date().toISOString().split('T')[0];
         const reminders = allPatients.filter(p => p.fup_date === today);
         document.getElementById('reminderDisplay').innerHTML = reminders.map(p => `
             <div class="card alert-red">
-                <b>${p.name}</b> (📞 ${p.phone})<br>
-                <span style="color:red; font-weight:bold;">आज फॉलो-अप आहे!</span>
-                <button class="wa-btn" onclick="sendReminder('${p.name}','${p.phone}','${p.fup_date}')">💬 रिमाइन्डर पाठवा</button>
+                <b>${p.name}</b><br>फॉलो-अप आज आहे! 🩺
+                <button class="wa-btn" onclick="sendReminder('${p.name}','${p.phone}')">💬 रिमाइन्डर मेसेज</button>
             </div>
-        `).join('') || "<center><br>आज कोणतेही फॉलो-अप नाहीत.</center>";
+        `).join('') || "<center><br>आज कोणतेही रिमाइन्डर नाहीत.</center>";
 
-        // ३. ब्रॉडकास्ट लिस्ट अपडेट
+        // ३. ब्रॉडकास्ट लिस्ट
         document.getElementById('masterDisplay').innerHTML = allPatients.map(p => `
             <div class="card">
-                <b>${p.name}</b> (📞 ${p.phone})
-                <button class="wa-btn" onclick="sendBroadcast('${p.phone}')">मेसेज पाठवा</button>
+                <b>${p.name}</b> (${p.phone})
+                <button class="wa-btn" onclick="sendBroadcast('${p.phone}')">💬 मेसेज पाठवा</button>
             </div>
         `).join('');
     }
 
     async function updateFUP(id, date) {
         await fetch(SCRIPT_URL, {method:"POST", mode:"no-cors", body:JSON.stringify({action:"updateFUP", id:id, fup_date:date})});
-        alert("फॉलो-अप तारीख अपडेट झाली!");
+        alert("फॉलो-अप अपडेट झाला!");
     }
 
     function editPatient(id) {
@@ -174,22 +179,18 @@
 
     function cancelEdit() {
         document.getElementById('editingId').value = "";
-        document.getElementById('pName').value = "";
-        document.getElementById('pPhone').value = "";
-        document.getElementById('pAddress').value = "";
-        document.getElementById('pNotes').value = "";
-        document.getElementById('formTitle').innerText = "📝 नवीन पेशंट नोंदणी";
         document.getElementById('saveBtn').innerText = "💾 डेटा सेव्ह करा";
         document.getElementById('cancelBtn').classList.add('hidden');
+        document.querySelectorAll('input, textarea').forEach(i => i.value = "");
     }
 
     function sendWA(name, phone, date, time) {
-        const msg = `🏥 *साईदत्त क्लिनिक, सातारा*\n\nनमस्ते *${name}*,\nआपली तपासणी निश्चित झाली आहे.\n📅 तारीख: ${date}\n🕒 वेळ: ${time || '--'}\n📍 पत्ता: मार्केट यार्ड, सातारा.\n\nधन्यवाद! 🙏`;
+        const msg = `🏥 *साईदत्त क्लिनिक, सातारा*\n\nनमस्ते *${name}*,\nतुमची अपॉइंटमेंट निश्चित झाली आहे.\n📅 तारीख: ${date}\n🕒 वेळ: ${time || '--'}\n📍 पत्ता: मार्केट यार्ड, सातारा.`;
         window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`, '_blank');
     }
 
-    function sendReminder(name, phone, date) {
-        const msg = `🏥 *साईदत्त क्लिनिक, सातारा*\n\nनमस्ते *${name}*,\nआज आपली क्लिनिकमध्ये फॉलो-अप भेट आहे. कृपया वेळेवर उपस्थित राहा. 🩺`;
+    function sendReminder(name, phone) {
+        const msg = `🏥 *साईदत्त क्लिनिक*\n\nनमस्ते *${name}*,\nआज आपली क्लिनिकमध्ये फॉलो-अप भेट आहे. कृपया वेळेवर उपस्थित राहा. 🙏`;
         window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`, '_blank');
     }
 
