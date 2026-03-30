@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>साईदत्त क्लिनिक - स्मार्ट मॅनेजमेंट</title>
     <style>
-        :root { --primary: #1a73e8; --secondary: #28a745; --yellow: #fff9c4; --red: #ffcdd2; --bg: #f4f7f6; }
+        :root { --primary: #1a73e8; --secondary: #28a745; --bg: #f4f7f6; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding-bottom: 80px; }
         .container { max-width: 500px; margin: auto; padding: 15px; background: white; min-height: 100vh; }
         input, textarea { width: 100%; padding: 12px; margin-top: 8px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
@@ -15,7 +15,6 @@
         .wa-btn { background: #25D366; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; width: 100%; margin-top: 10px; }
         .edit-btn { background: var(--primary); color: white; border: none; padding: 5px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; float: right; font-weight: bold; }
         .hidden { display: none; }
-        .fup-section { border-top: 1px solid #eee; margin-top: 10px; padding-top: 10px; display: flex; justify-content: space-between; align-items: center; }
     </style>
 </head>
 <body>
@@ -37,7 +36,9 @@
         <button class="btn btn-save" id="saveBtn" onclick="saveData()">💾 डेटा सेव्ह करा</button>
         <button class="btn hidden" id="cancelBtn" onclick="cancelEdit()" style="background:#666;">रद्द करा</button>
         
-        <div style="background:#e8f0fe; padding:12px; border-radius:10px; margin-top:20px;">
+        <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+        
+        <div style="background:#e8f0fe; padding:12px; border-radius:10px;">
             <div style="display:flex; justify-content:space-between; align-items:center;">
                 <b>तारीख निवडा:</b>
                 <input type="date" id="listViewDate" onchange="loadAllData()" style="width:55%;">
@@ -48,40 +49,42 @@
 </div>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwlIlFgX6eg3CLZzw_CdNtalo0FTAtw5Czf_3jb4GNZmu8GpR0vTL5hKjupqe3jJp0E/exec";
+    // तुमची नवीन Apps Script URL इथे टाका
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwpFpSOXAd03QJeFL52ygXU2Q8zQmM2Lyi8699BfyNntljm6aJtHKNg5SPznrwbVDM_/exec";
     let allPatients = [];
 
-    // १. डेटा सेव्ह फंक्शन (Time Fix सह)
     async function saveData() {
-        const id = document.getElementById('editingId').value || Date.now().toString();
         const pName = document.getElementById('pName').value;
         const pPhone = document.getElementById('pPhone').value;
-        const pTimeVal = document.getElementById('pTime').value; // Time value capture
+        const pTimeVal = document.getElementById('pTime').value;
 
-        if(!pName || !pPhone) return alert("नाव आणि नंबर भरा!");
+        if(!pName || !pPhone) return alert("नाव आणि नंबर आवश्यक!");
 
         const d = {
             action: "save",
-            id: id,
+            id: document.getElementById('editingId').value || Date.now().toString(),
             name: pName,
             phone: pPhone,
             address: document.getElementById('pAddress').value,
             date: document.getElementById('pDate').value,
-            time: pTimeVal, // Sending captured time
+            time: pTimeVal, // G Column मध्ये जाईल
             notes: document.getElementById('pNotes').value,
             userId: "sai@gmail.com"
         };
 
         document.getElementById('saveBtn').innerText = "सेव्ह होत आहे...";
-        await fetch(SCRIPT_URL, {method:"POST", mode:"no-cors", body:JSON.stringify(d)});
         
-        alert("डेटा यशस्वीरित्या सेव्ह झाला!");
-        cancelEdit();
-        loadAllData();
+        try {
+            await fetch(SCRIPT_URL, {method:"POST", mode:"no-cors", body:JSON.stringify(d)});
+            alert("डेटा यशस्वीरित्या सेव्ह झाला!");
+            cancelEdit();
+            loadAllData();
+        } catch (e) {
+            alert("एरर: " + e);
+        }
         document.getElementById('saveBtn').innerText = "💾 डेटा सेव्ह करा";
     }
 
-    // २. डेटा लोड करणे आणि WhatsApp/Edit बटन दाखवणे
     async function loadAllData() {
         const selDate = document.getElementById('listViewDate').value;
         const resp = await fetch(`${SCRIPT_URL}?action=get`);
@@ -89,11 +92,6 @@
         
         const filtered = allPatients.filter(p => p.date === selDate);
         
-        if (filtered.length === 0) {
-            document.getElementById('recentDisplay').innerHTML = "<center><br>या तारखेचा डेटा उपलब्ध नाही.</center>";
-            return;
-        }
-
         document.getElementById('recentDisplay').innerHTML = filtered.map((p, i) => `
             <div class="card">
                 <button class="edit-btn" onclick="editPatient('${p.id}')">Edit</button>
@@ -102,16 +100,11 @@
                     📍 ${p.address || '-'}<br>
                     📞 ${p.phone} | 🕒 ${p.time || 'वेळ नाही'}
                 </div>
-                <div class="fup-section">
-                    <span style="font-size:11px;">फॉलो-अप:</span>
-                    <input type="date" value="${p.fup_date || ''}" onchange="updateFUP('${p.id}', this.value)" style="width:130px; padding:3px; font-size:11px;">
-                </div>
                 <button class="wa-btn" onclick="sendWA('${p.name}','${p.phone}','${p.date}','${p.time}')">💬 WhatsApp मेसेज पाठवा</button>
             </div>
-        `).join('');
+        `).join('') || "<center><br>या तारखेचा डेटा नाही.</center>";
     }
 
-    // ३. एडिट फंक्शन
     function editPatient(id) {
         const p = allPatients.find(x => x.id == id);
         if(!p) return;
@@ -120,7 +113,7 @@
         document.getElementById('pPhone').value = p.phone;
         document.getElementById('pAddress').value = p.address || "";
         document.getElementById('pDate').value = p.date;
-        document.getElementById('pTime').value = p.time || ""; // Loading time for edit
+        document.getElementById('pTime').value = p.time || "";
         document.getElementById('pNotes').value = p.notes || "";
         
         document.getElementById('formTitle').innerText = "✏️ डेटा सुधारा";
@@ -129,18 +122,12 @@
         window.scrollTo(0,0);
     }
 
-    async function updateFUP(id, date) {
-        await fetch(SCRIPT_URL, {method:"POST", mode:"no-cors", body:JSON.stringify({action:"updateFUP", id:id, fup_date:date})});
-        alert("फॉलो-अप तारीख अपडेट झाली!");
-    }
-
     function cancelEdit() {
         document.getElementById('editingId').value = "";
         document.getElementById('pName').value = "";
         document.getElementById('pPhone').value = "";
         document.getElementById('pAddress').value = "";
         document.getElementById('pNotes').value = "";
-        document.getElementById('pTime').value = "";
         document.getElementById('formTitle').innerText = "📝 नवीन पेशंट नोंदणी";
         document.getElementById('saveBtn').innerText = "💾 डेटा सेव्ह करा";
         document.getElementById('cancelBtn').classList.add('hidden');
