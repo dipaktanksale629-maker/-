@@ -5,15 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>साईदत्त क्लिनिक - स्मार्ट मॅनेजमेंट</title>
     <style>
-        :root { --primary: #1a73e8; --secondary: #28a745; --bg: #f4f7f6; }
+        :root { --primary: #1a73e8; --secondary: #28a745; --yellow: #fff9c4; --red: #ffcdd2; --bg: #f4f7f6; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding-bottom: 80px; }
         .container { max-width: 500px; margin: auto; padding: 15px; background: white; min-height: 100vh; }
         input, textarea { width: 100%; padding: 12px; margin-top: 8px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
         .btn { width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; color: white; }
         .btn-save { background: var(--secondary); }
-        .card { border: 1px solid #ddd; padding: 15px; margin-top: 10px; border-radius: 12px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .wa-btn { background: #25D366; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; width: 100%; margin-top: 10px; }
-        .edit-btn { background: var(--primary); color: white; border: none; padding: 5px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; float: right; font-weight: bold; }
+        .card { border: 1px solid #ddd; padding: 12px; margin-top: 10px; border-radius: 12px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .alert-yellow { background-color: var(--yellow) !important; border-left: 8px solid #fbc02d; }
+        .alert-red { background-color: var(--red) !important; border-left: 8px solid #d32f2f; }
+        .nav-bar { position: fixed; bottom: 0; width: 100%; max-width: 500px; display: flex; background: white; border-top: 2px solid #eee; z-index: 100; }
+        .nav-item { flex: 1; padding: 15px; text-align: center; cursor: pointer; font-weight: bold; color: #666; font-size: 13px; }
+        .nav-item.active { color: var(--primary); background: #e8f0fe; border-top: 3px solid var(--primary); }
+        .wa-btn { background: #25D366; color: white; border: none; padding: 8px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold; width: 100%; margin-top: 10px; }
+        .edit-btn { background: var(--primary); color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; float: right; }
         .hidden { display: none; }
     </style>
 </head>
@@ -36,9 +41,7 @@
         <button class="btn btn-save" id="saveBtn" onclick="saveData()">💾 डेटा सेव्ह करा</button>
         <button class="btn hidden" id="cancelBtn" onclick="cancelEdit()" style="background:#666;">रद्द करा</button>
         
-        <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
-        
-        <div style="background:#e8f0fe; padding:12px; border-radius:10px;">
+        <div style="background:#e8f0fe; padding:12px; border-radius:10px; margin-top:20px;">
             <div style="display:flex; justify-content:space-between; align-items:center;">
                 <b>तारीख निवडा:</b>
                 <input type="date" id="listViewDate" onchange="loadAllData()" style="width:55%;">
@@ -46,96 +49,122 @@
         </div>
         <div id="recentDisplay">लोड होत आहे...</div>
     </div>
+
+    <div id="reminderSection" class="hidden">
+        <h4>🔔 फॉलो-अप रिमाइन्डर</h4>
+        <div id="reminderDisplay">लोड होत आहे...</div>
+    </div>
+
+    <div id="broadcastSection" class="hidden">
+        <h4>📢 ब्रॉडकास्ट मेसेज</h4>
+        <textarea id="broadcastMsg" placeholder="मेसेज टाईप करा..."></textarea>
+        <div id="masterDisplay">लोड होत आहे...</div>
+    </div>
+
+    <div class="nav-bar">
+        <div class="nav-item active" id="n1" onclick="showTab('reg')">नोंदणी</div>
+        <div class="nav-item" id="n2" onclick="showTab('reminder')">रिमाइन्डर</div>
+        <div class="nav-item" id="n3" onclick="showTab('broadcast')">ब्रॉडकास्ट</div>
+    </div>
 </div>
 
 <script>
-    // तुमची नवीन Apps Script URL इथे टाका
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwpFpSOXAd03QJeFL52ygXU2Q8zQmM2Lyi8699BfyNntljm6aJtHKNg5SPznrwbVDM_/exec";
     let allPatients = [];
 
+    function showTab(tab) {
+        ['regSection', 'reminderSection', 'broadcastSection'].forEach(s => document.getElementById(s).classList.add('hidden'));
+        ['n1', 'n2', 'n3'].forEach(n => document.getElementById(n).classList.remove('active'));
+        
+        document.getElementById(tab + 'Section').classList.remove('hidden');
+        document.getElementById(tab === 'reg' ? 'n1' : (tab === 'reminder' ? 'n2' : 'n3')).classList.add('active');
+        loadAllData();
+    }
+
     async function saveData() {
-        const pName = document.getElementById('pName').value;
-        const pPhone = document.getElementById('pPhone').value;
-        const pTimeVal = document.getElementById('pTime').value;
-
-        if(!pName || !pPhone) return alert("नाव आणि नंबर आवश्यक!");
-
         const d = {
             action: "save",
             id: document.getElementById('editingId').value || Date.now().toString(),
-            name: pName,
-            phone: pPhone,
+            name: document.getElementById('pName').value,
+            phone: document.getElementById('pPhone').value,
             address: document.getElementById('pAddress').value,
             date: document.getElementById('pDate').value,
-            time: pTimeVal, // G Column मध्ये जाईल
+            time: document.getElementById('pTime').value,
             notes: document.getElementById('pNotes').value,
             userId: "sai@gmail.com"
         };
-
-        document.getElementById('saveBtn').innerText = "सेव्ह होत आहे...";
-        
-        try {
-            await fetch(SCRIPT_URL, {method:"POST", mode:"no-cors", body:JSON.stringify(d)});
-            alert("डेटा यशस्वीरित्या सेव्ह झाला!");
-            cancelEdit();
-            loadAllData();
-        } catch (e) {
-            alert("एरर: " + e);
-        }
-        document.getElementById('saveBtn').innerText = "💾 डेटा सेव्ह करा";
+        if(!d.name || !d.phone) return alert("नाव आणि नंबर भरा!");
+        await fetch(SCRIPT_URL, {method:"POST", mode:"no-cors", body:JSON.stringify(d)});
+        alert("डेटा सेव्ह झाला!");
+        cancelEdit(); loadAllData();
     }
 
     async function loadAllData() {
-        const selDate = document.getElementById('listViewDate').value;
         const resp = await fetch(`${SCRIPT_URL}?action=get`);
         allPatients = await resp.json();
         
+        // रजिस्ट्रेशन लिस्ट
+        const selDate = document.getElementById('listViewDate').value;
         const filtered = allPatients.filter(p => p.date === selDate);
-        
-        document.getElementById('recentDisplay').innerHTML = filtered.map((p, i) => `
+        document.getElementById('recentDisplay').innerHTML = filtered.map(p => `
             <div class="card">
                 <button class="edit-btn" onclick="editPatient('${p.id}')">Edit</button>
-                <b>#${i+1} ${p.name}</b>
-                <div style="font-size:12px; color:#555; margin-top:5px;">
-                    📍 ${p.address || '-'}<br>
-                    📞 ${p.phone} | 🕒 ${p.time || 'वेळ नाही'}
-                </div>
-                <button class="wa-btn" onclick="sendWA('${p.name}','${p.phone}','${p.date}','${p.time}')">💬 WhatsApp मेसेज पाठवा</button>
+                <b>${p.name}</b><br>
+                <small>🕒 ${p.time || '--'} | 📞 ${p.phone}</small>
+                <button class="wa-btn" onclick="sendWA('${p.name}','${p.phone}','${p.date}','${p.time}')">WhatsApp मेसेज</button>
             </div>
-        `).join('') || "<center><br>या तारखेचा डेटा नाही.</center>";
+        `).join('') || "डेटा नाही.";
+
+        // रिमाइन्डर लॉजिक
+        const today = new Date().toISOString().split('T')[0];
+        const reminders = allPatients.filter(p => p.fup_date === today);
+        document.getElementById('reminderDisplay').innerHTML = reminders.map(p => `
+            <div class="card alert-red">
+                <b>${p.name}</b><br>फॉलो-अप आज आहे!
+                <button class="wa-btn" onclick="sendWA('${p.name}','${p.phone}','${p.fup_date}','')">रिमाइन्डर पाठवा</button>
+            </div>
+        `).join('') || "आज कोणतेही रिमाइन्डर नाहीत.";
+
+        // ब्रॉडकास्ट लिस्ट
+        document.getElementById('masterDisplay').innerHTML = allPatients.map(p => `
+            <div class="card">
+                <b>${p.name}</b> (${p.phone})
+                <button class="wa-btn" onclick="sendBroadcast('${p.phone}')">मेसेज पाठवा</button>
+            </div>
+        `).join('');
     }
 
     function editPatient(id) {
         const p = allPatients.find(x => x.id == id);
-        if(!p) return;
         document.getElementById('editingId').value = p.id;
         document.getElementById('pName').value = p.name;
         document.getElementById('pPhone').value = p.phone;
-        document.getElementById('pAddress').value = p.address || "";
+        document.getElementById('pAddress').value = p.address;
         document.getElementById('pDate').value = p.date;
-        document.getElementById('pTime').value = p.time || "";
-        document.getElementById('pNotes').value = p.notes || "";
-        
+        document.getElementById('pTime').value = p.time;
+        document.getElementById('pNotes').value = p.notes;
         document.getElementById('formTitle').innerText = "✏️ डेटा सुधारा";
-        document.getElementById('saveBtn').innerText = "🔄 अपडेट करा";
         document.getElementById('cancelBtn').classList.remove('hidden');
-        window.scrollTo(0,0);
+        showTab('reg'); window.scrollTo(0,0);
     }
 
     function cancelEdit() {
         document.getElementById('editingId').value = "";
-        document.getElementById('pName').value = "";
-        document.getElementById('pPhone').value = "";
-        document.getElementById('pAddress').value = "";
-        document.getElementById('pNotes').value = "";
         document.getElementById('formTitle').innerText = "📝 नवीन पेशंट नोंदणी";
-        document.getElementById('saveBtn').innerText = "💾 डेटा सेव्ह करा";
         document.getElementById('cancelBtn').classList.add('hidden');
+        document.querySelectorAll('input, textarea').forEach(i => i.value = "");
+        document.getElementById('pDate').valueAsDate = new Date();
     }
 
     function sendWA(name, phone, date, time) {
-        const msg = `🏥 *साईदत्त क्लिनिक, सातारा*\n\nनमस्ते *${name}*,\nआपली तपासणी निश्चित झाली आहे.\n📅 तारीख: ${date}\n🕒 वेळ: ${time || '--'}\n📍 पत्ता: मार्केट यार्ड, सातारा.\n\nधन्यवाद! 🙏`;
-        window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+        const msg = `🏥 *साईदत्त क्लिनिक*\nनमस्ते ${name}, तुमची वेळ ${date} ${time} ला निश्चित आहे.`;
+        window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`);
+    }
+
+    function sendBroadcast(phone) {
+        const msg = document.getElementById('broadcastMsg').value;
+        if(!msg) return alert("मेसेज लिहा!");
+        window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`);
     }
 
     window.onload = () => {
