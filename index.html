@@ -3,24 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>साईदत्ता क्लिनिक - अल्टीमेट</title>
+    <title>साईदत्ता क्लिनिक - अल्टीमेट प्रो</title>
     <style>
-        :root { --primary: #1a73e8; --secondary: #28a745; --yellow: #fff3cd; --red: #f8d7da; --bg: #f0f2f5; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding-bottom: 80px; }
-        .login-screen { position: fixed; inset: 0; background: var(--primary); display: flex; justify-content: center; align-items: center; z-index: 9999; }
-        .login-box { background: white; padding: 30px; border-radius: 20px; width: 85%; max-width: 350px; text-align: center; }
-        .container { display: none; max-width: 500px; margin: auto; padding: 15px; background: white; min-height: 100vh; }
-        input, textarea, select { width: 100%; padding: 12px; margin-top: 10px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; }
-        .btn { width: 100%; padding: 15px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; color: white; }
+        :root { --primary: #1a73e8; --secondary: #28a745; --yellow: #fff3cd; --red: #f8d7da; --bg: #f0f2f5; --text: #333; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; padding-bottom: 80px; color: var(--text); }
+        .login-screen { position: fixed; inset: 0; background: var(--primary); display: flex; justify-content: center; align-items: center; z-index: 10000; }
+        .login-box { background: white; padding: 30px; border-radius: 20px; width: 85%; max-width: 350px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .container { display: none; max-width: 500px; margin: auto; padding: 15px; background: white; min-height: 100vh; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
+        input, textarea { width: 100%; padding: 12px; margin-top: 10px; border: 1px solid #ccc; border-radius: 10px; box-sizing: border-box; font-size: 16px; }
+        .btn { width: 100%; padding: 15px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; margin-top: 15px; color: white; transition: 0.3s; }
         .btn-save { background: var(--secondary); }
-        .btn-wa { background: #25D366; font-size: 12px; padding: 5px 10px; margin-top: 5px; }
-        .card { border: 1px solid #ddd; padding: 15px; margin-top: 10px; border-radius: 12px; position: relative; }
-        .alert-yellow { background: var(--yellow); border-left: 5px solid #ffc107; }
-        .alert-red { background: var(--red); border-left: 5px solid #dc3545; }
-        .token { position: absolute; top: 10px; right: 10px; background: var(--primary); color: white; padding: 2px 8px; border-radius: 5px; }
-        .nav-bar { position: fixed; bottom: 0; width: 100%; max-width: 500px; display: flex; background: white; border-top: 1px solid #ddd; }
-        .nav-item { flex: 1; padding: 15px; text-align: center; cursor: pointer; font-weight: bold; color: #666; }
-        .nav-item.active { color: var(--primary); background: #e8f0fe; }
+        .btn-wa { background: #25D366; font-size: 13px; padding: 8px; margin-top: 10px; width: auto; display: inline-block; }
+        .card { border: 1px solid #ddd; padding: 15px; margin-top: 12px; border-radius: 15px; position: relative; background: #fff; transition: 0.3s; }
+        .alert-yellow { background: var(--yellow) !important; border-left: 6px solid #ffc107; }
+        .alert-red { background: var(--red) !important; border-left: 6px solid #dc3545; }
+        .token { position: absolute; top: 12px; right: 12px; background: var(--primary); color: white; padding: 3px 10px; border-radius: 8px; font-size: 12px; font-weight: bold; }
+        .nav-bar { position: fixed; bottom: 0; width: 100%; max-width: 500px; display: flex; background: white; border-top: 2px solid #eee; z-index: 1000; }
+        .nav-item { flex: 1; padding: 15px 5px; text-align: center; cursor: pointer; font-size: 14px; font-weight: bold; color: #777; transition: 0.3s; }
+        .nav-item.active { color: var(--primary); background: #e8f0fe; border-top: 3px solid var(--primary); }
         .hidden { display: none; }
     </style>
 </head>
@@ -28,46 +28,52 @@
 
 <div id="loginPage" class="login-screen">
     <div class="login-box">
-        <h2>🏥 क्लिनिक लॉगिन</h2>
-        <input type="email" id="uEmail" placeholder="ईमेल">
+        <h2 style="color: var(--primary); margin-bottom: 20px;">🏥 क्लिनिक लॉगिन</h2>
+        <input type="email" id="uEmail" placeholder="नोंदणीकृत ईमेल">
         <input type="password" id="uPass" placeholder="पासवर्ड">
-        <button class="btn" style="background:var(--primary)" onclick="login()">प्रवेश</button>
+        <button class="btn" style="background:var(--primary)" onclick="login()">प्रवेश करा</button>
     </div>
 </div>
 
 <div id="appPage" class="container">
-    <div style="display:flex; justify-content:space-between;">
-        <h3 id="cTitle">साईदत्ता क्लिनिक</h3>
-        <button onclick="logout()" style="border:none; background:none; color:red;">Logout</button>
+    <div style="display:flex; justify-content:space-between; align-items: center; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px;">
+        <h3 id="cTitle" style="margin:0; color:var(--primary);">साईदत्ता क्लिनिक</h3>
+        <button onclick="logout()" style="border:none; background:#fee; color:#d33; padding:5px 12px; border-radius:8px; font-weight:bold; cursor:pointer;">Logout</button>
     </div>
 
     <div id="regSection">
-        <h4>📝 पेशंट नोंदणी (Direct Add)</h4>
-        <input type="text" id="pName" placeholder="पेशंटचे नाव">
-        <input type="number" id="pPhone" placeholder="WhatsApp नंबर">
-        <div style="display:flex; gap:5px;">
-            <input type="date" id="pDate" title="तपासणी तारीख">
-            <input type="date" id="fupDate" title="फॉलो-अप तारीख">
+        <h4 style="margin-top:20px; color:#555;">📝 पेशंट नोंदणी (Direct Add)</h4>
+        <input type="text" id="pName" placeholder="पेशंटचे पूर्ण नाव">
+        <input type="number" id="pPhone" placeholder="WhatsApp नंबर (९१ विना)">
+        <div style="display:flex; gap:10px;">
+            <div style="flex:1;">
+                <label style="font-size:12px; color:#666;">तपासणी तारीख</label>
+                <input type="date" id="pDate">
+            </div>
+            <div style="flex:1;">
+                <label style="font-size:12px; color:#666;">फॉलो-अप तारीख</label>
+                <input type="date" id="fupDate">
+            </div>
         </div>
-        <textarea id="pNotes" placeholder="तपासणी नोट्स / औषधे"></textarea>
-        <button class="btn btn-save" onclick="saveData()">💾 सेव्ह करा</button>
+        <textarea id="pNotes" rows="3" placeholder="तपासणी नोट्स / औषधे / लक्षणे"></textarea>
+        <button class="btn btn-save" onclick="saveData()">💾 डेटा क्लाउडवर सेव्ह करा</button>
     </div>
 
     <div id="listSection" class="hidden">
-        <h4>📋 आजचे पेशंट आणि अलर्ट्स</h4>
+        <h4 style="margin-top:20px; color:#555;">📋 आजचे पेशंट आणि अलर्ट्स</h4>
         <input type="date" id="filterDate" onchange="loadData()">
-        <div id="listDisplay">लोड होत आहे...</div>
+        <div id="listDisplay" style="margin-top:15px;">माहिती शोधत आहे...</div>
     </div>
 
     <div id="broadcastSection" class="hidden">
-        <h4>📢 सर्व पेशंट मास्टर लिस्ट</h4>
-        <div id="masterDisplay">डेटा लोड होत आहे...</div>
+        <h4 style="margin-top:20px; color:#555;">📢 सर्व पेशंट मास्टर लिस्ट (Broadcast)</h4>
+        <div id="masterDisplay" style="margin-top:15px;">मास्टर लिस्ट लोड होत आहे...</div>
     </div>
 
     <div class="nav-bar">
-        <div class="nav-item active" id="n1" onclick="show('reg')">नोंदणी</div>
-        <div class="nav-item" id="n2" onclick="show('list')">आजची लिस्ट</div>
-        <div class="nav-item" id="n3" onclick="show('broadcast')">ब्रॉडकास्ट</div>
+        <div class="nav-item active" id="n1" onclick="show('reg')">📝 नोंदणी</div>
+        <div class="nav-item" id="n2" onclick="show('list')">📋 आजची लिस्ट</div>
+        <div class="nav-item" id="n3" onclick="show('broadcast')">📢 ब्रॉडकास्ट</div>
     </div>
 </div>
 
@@ -75,11 +81,12 @@
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw_pDiZPZFfnUvlRGFxEj6B2uKuWgHIj4S4BbFw_y4c103HQqIK97wUkhR6rQ2FIKvrmQ/exec";
 
     function login() {
-        const u = document.getElementById('uEmail').value;
-        const p = document.getElementById('uPass').value;
+        const u = document.getElementById('uEmail').value.trim();
+        const p = document.getElementById('uPass').value.trim();
         if((u==="sai@gmail.com" && p==="sai123") || (u==="test@gmail.com" && p==="123")) {
-            localStorage.setItem("user", u); startApp();
-        } else { alert("Error!"); }
+            localStorage.setItem("user", u); 
+            startApp();
+        } else { alert("ईमेल किंवा पासवर्ड चुकीचा आहे!"); }
     }
 
     function startApp() {
@@ -89,17 +96,16 @@
             document.getElementById('appPage').style.display='block';
             document.getElementById('pDate').valueAsDate = new Date();
             document.getElementById('filterDate').valueAsDate = new Date();
+            document.getElementById('cTitle').innerText = "🏥 " + user.split('@')[0].toUpperCase();
             loadData();
         }
     }
 
     function show(sec) {
-        document.getElementById('regSection').classList.add('hidden');
-        document.getElementById('listSection').classList.add('hidden');
-        document.getElementById('broadcastSection').classList.add('hidden');
-        document.getElementById('n1').classList.remove('active');
-        document.getElementById('n2').classList.remove('active');
-        document.getElementById('n3').classList.remove('active');
+        const sections = ['regSection', 'listSection', 'broadcastSection'];
+        const navs = ['n1', 'n2', 'n3'];
+        sections.forEach(s => document.getElementById(s).classList.add('hidden'));
+        navs.forEach(n => document.getElementById(n).classList.remove('active'));
 
         if(sec==='reg') { document.getElementById('regSection').classList.remove('hidden'); document.getElementById('n1').classList.add('active'); }
         if(sec==='list') { document.getElementById('listSection').classList.remove('hidden'); document.getElementById('n2').classList.add('active'); loadData(); }
@@ -107,57 +113,107 @@
     }
 
     async function saveData() {
+        const name = document.getElementById('pName').value.trim();
+        if(!name) return alert("पेशंटचे नाव टाकणे अनिवार्य आहे!");
+
         const data = {
-            action: "save", userId: localStorage.getItem("user"), id: Date.now(),
-            name: document.getElementById('pName').value, phone: document.getElementById('pPhone').value,
-            date: document.getElementById('pDate').value, fup_date: document.getElementById('fupDate').value,
-            notes: document.getElementById('pNotes').value, checked: false
+            action: "save",
+            userId: localStorage.getItem("user"),
+            id: Date.now(),
+            name: name,
+            phone: document.getElementById('pPhone').value,
+            date: document.getElementById('pDate').value,
+            fup_date: document.getElementById('fupDate').value,
+            notes: document.getElementById('pNotes').value,
+            checked: false
         };
-        if(!data.name) return alert("नाव टाका!");
-        alert("डेटा सेव्ह होत आहे...");
-        await fetch(SCRIPT_URL, {method:"POST", mode:"no-cors", body:JSON.stringify(data)});
-        location.reload();
+
+        alert("कृपया वाट पहा, डेटा सेव्ह होत आहे...");
+        try {
+            await fetch(SCRIPT_URL, {method:"POST", mode:"no-cors", body:JSON.stringify(data)});
+            alert("यशस्वी! डेटा गुगल शीटमध्ये सेव्ह झाला.");
+            // फॉर्म क्लिअर करा
+            document.getElementById('pName').value = "";
+            document.getElementById('pPhone').value = "";
+            document.getElementById('pNotes').value = "";
+            document.getElementById('fupDate').value = "";
+        } catch(e) { alert("एरर: इंटरनेट कनेक्शन तपासा!"); }
     }
 
     async function loadData() {
         const userId = localStorage.getItem("user");
         const fDate = document.getElementById('filterDate').value;
-        const resp = await fetch(`${SCRIPT_URL}?action=get&userId=${userId}`);
-        const all = await resp.json();
         const display = document.getElementById('listDisplay');
-        display.innerHTML = "";
+        display.innerHTML = "माहिती लोड होत आहे...";
 
-        all.forEach((p, index) => {
-            const today = new Date(fDate);
-            const fup = new Date(p.fup_date);
-            const diff = (fup - today) / (1000 * 60 * 60 * 24);
+        try {
+            const resp = await fetch(`${SCRIPT_URL}?action=get&userId=${userId}`);
+            const all = await resp.json();
+            display.innerHTML = "";
 
-            let alertClass = "";
-            if(p.fup_date === fDate) alertClass = "alert-red";
-            else if(diff > 0 && diff <= 2) alertClass = "alert-yellow";
+            let found = false;
+            all.forEach((p, index) => {
+                const today = new Date(fDate);
+                today.setHours(0,0,0,0);
+                const fup = p.fup_date ? new Date(p.fup_date) : null;
+                if(fup) fup.setHours(0,0,0,0);
 
-            if(p.date === fDate || alertClass !== "") {
-                display.innerHTML += `
-                <div class="card ${alertClass}">
-                    <div class="token">#${index+1}</div>
-                    <input type="checkbox" ${p.checked?'checked':''}> <b>${p.name}</b><br>
-                    <small>📞 ${p.phone} | 📅 F-Up: ${p.fup_date}</small><br>
-                    <button class="btn btn-wa" onclick="sendWA('${p.phone}','${p.name}','${p.fup_date}')">WhatsApp Reminder</button>
-                </div>`;
-            }
-        });
+                let alertClass = "";
+                if(p.fup_date === fDate) {
+                    alertClass = "alert-red"; // आज फॉलो-अप आहे
+                } else if(fup) {
+                    const diffTime = fup - today;
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    if(diffDays > 0 && diffDays <= 2) alertClass = "alert-yellow"; // २ दिवस आधी
+                }
+
+                if(p.date === fDate || alertClass !== "") {
+                    found = true;
+                    display.innerHTML += `
+                    <div class="card ${alertClass}">
+                        <div class="token">#${index+1}</div>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <input type="checkbox" style="width:20px; height:20px;">
+                            <b style="font-size:18px;">${p.name}</b>
+                        </div>
+                        <div style="margin-top:8px; font-size:14px; line-height:1.5;">
+                            📞 <b>${p.phone || 'नंबर नाही'}</b><br>
+                            📅 तपासणी: ${p.date} | 🔔 फॉलो-अप: ${p.fup_date || '-'}<br>
+                            📝 नोट्स: ${p.notes || '-'}<br>
+                        </div>
+                        <button class="btn btn-wa" onclick="sendWA('${p.phone}','${p.name}','${p.fup_date}')">
+                            📲 WhatsApp Reminder पाठवा
+                        </button>
+                    </div>`;
+                }
+            });
+            if(!found) display.innerHTML = "<center><br>या तारखेला कोणतेही पेशंट किंवा रिमाइन्डर नाहीत.</center>";
+        } catch(e) { display.innerHTML = "<center>डेटा लोड करण्यात अडचण आली.</center>"; }
     }
 
     async function loadMaster() {
         const userId = localStorage.getItem("user");
-        const resp = await fetch(`${SCRIPT_URL}?action=get&userId=${userId}`);
-        const all = await resp.json();
         const display = document.getElementById('masterDisplay');
-        display.innerHTML = all.map(p => `<div class="card"><b>${p.name}</b><br>${p.phone}<br><small>${p.date}</small></div>`).join('');
+        display.innerHTML = "मास्टर लिस्ट तयार होत आहे...";
+
+        try {
+            const resp = await fetch(`${SCRIPT_URL}?action=get&userId=${userId}`);
+            const all = await resp.json();
+            display.innerHTML = all.length ? "" : "अजून एकही पेशंट ॲड केलेला नाही.";
+            
+            all.sort((a,b) => b.id - a.id).forEach(p => {
+                display.innerHTML += `
+                <div class="card">
+                    <b>${p.name}</b><br>
+                    <small>📞 ${p.phone} | 📅 ${p.date}</small>
+                </div>`;
+            });
+        } catch(e) { display.innerHTML = "Error!"; }
     }
 
     function sendWA(ph, nm, dt) {
-        const msg = `प्रिय ${nm},\nतुमची साईदत्ता क्लिनिकमधील पुढील तपासणीची तारीख ${dt} आहे. कृपया वेळेवर उपस्थित राहावे.\n- डॉ. साईदत्ता क्लिनिक`;
+        if(!ph) return alert("WhatsApp नंबर उपलब्ध नाही!");
+        const msg = `प्रिय ${nm},\nतुमची साईदत्ता क्लिनिकमधील पुढील तपासणीची तारीख ${dt || 'लवकरच'} आहे. कृपया वेळेवर उपस्थित राहावे.\n- धन्यवाद, डॉ. साईदत्ता क्लिनिक`;
         window.open(`https://wa.me/91${ph}?text=${encodeURIComponent(msg)}`);
     }
 
