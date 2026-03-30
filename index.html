@@ -51,12 +51,12 @@
             <input type="date" id="pDate">
             <input type="time" id="pTime">
         </div>
-        <textarea id="pNotes" placeholder="तपासणी नोट्स / आजार"></textarea>
+        <textarea id="pNotes" placeholder="तपासणी नोट्स"></textarea>
         <button class="btn btn-save" onclick="saveData()">💾 सेव्ह करा</button>
         
         <div class="date-header">
             <div style="display:flex; justify-content:space-between;">
-                <b id="displayDateText">तारीख: --/--/----</b>
+                <b id="displayDateText">Date: --/--/----</b>
                 <input type="date" id="listViewDate" onchange="loadAllData()" style="width:40%; margin:0; padding:5px;">
             </div>
             <div id="patientCountDisplay" style="font-size:14px; font-weight:bold; color:var(--primary); margin-top:5px;">एकूण पेशंट: 0</div>
@@ -84,7 +84,7 @@
 
 <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzg2zBV_rHpsV3IVhKix53bSNLHcI9o94aNq956Os0HEJXf0HqeH_Obb9d5tSr9SyoP/exec";
-    const clinicFullAddress = "साईदत्त क्लिनिक, साई गणेश हॉस्पिटल जवळ, मार्केट यार्ड, राधिका रोड, सातारा.";
+    const fullAddress = "साईदत्त क्लिनिक, साई गणेश हॉस्पिटल जवळ, मार्केट यार्ड, राधिका रोड, सातारा.";
     const opdContacts = "9604174209 / 0216238539";
 
     function formatDate(dStr) {
@@ -97,7 +97,7 @@
         const u = document.getElementById('uEmail').value;
         const p = document.getElementById('uPass').value;
         if(u==="sai@gmail.com" && p==="sai123") { localStorage.setItem("user", u); startApp(); }
-        else { alert("पासवर्ड चुकीचा आहे!"); }
+        else { alert("Login Error!"); }
     }
 
     function startApp() {
@@ -125,21 +125,14 @@
         const pDate = document.getElementById('pDate').value;
         const pTime = document.getElementById('pTime').value;
         const pNotes = document.getElementById('pNotes').value;
-
         if(!pName || !pPhone) return alert("नाव आणि नंबर आवश्यक!");
 
-        const d = { 
-            action:"save", userId:localStorage.getItem("user"), id:Date.now(), 
-            name:pName, phone:pPhone, address:pAddr, date:pDate, time:pTime, notes:pNotes 
-        };
-
-        const msg = `🏥 *साईदत्त क्लिनिक, सातारा*\n\nनमस्ते *${pName}*,\nआपली तपासणीची वेळ निश्चित झाली आहे! ✅\n\n👨‍⚕️ *डॉ. रवींद्र घोंगडे*\n📅 *तारीख:* ${formatDate(pDate)}\n🕒 *वेळ:* ${pTime}\n\n📍 *पत्ता:* ${clinicFullAddress}\n📞 *संपर्क:* ${opdContacts}\n\n*वेळेवर उपस्थित राहून सहकार्य करावे. धन्यवाद!* 🙏`;
+        const d = { action:"save", userId:localStorage.getItem("user"), id:Date.now(), name:pName, phone:pPhone, address:pAddr, date:pDate, time:pTime, notes:pNotes };
+        const msg = `🏥 *साईदत्त क्लिनिक, सातारा*\n\nनमस्ते *${pName}*,\nआपली तपासणीची वेळ निश्चित झाली आहे! ✅\n\n👨‍⚕️ *डॉ. रवींद्र घोंगडे*\n📅 *तारीख:* ${formatDate(pDate)}\n🕒 *वेळ:* ${pTime}\n\n📍 *पत्ता:* ${fullAddress}\n📞 *संपर्क:* ${opdContacts}\n\n*वेळेवर उपस्थित राहून सहकार्य करावे. धन्यवाद!* 🙏`;
         
         if(confirm("डेटा सेव्ह झाला! मेसेज पाठवायचा का?")) { window.open(`https://wa.me/91${pPhone}?text=${encodeURIComponent(msg)}`); }
-        
         await fetch(SCRIPT_URL, {method:"POST", mode:"no-cors", body:JSON.stringify(d)});
-        document.getElementById('pName').value=""; document.getElementById('pPhone').value=""; 
-        document.getElementById('pAddress').value=""; document.getElementById('pNotes').value="";
+        document.getElementById('pName').value=""; document.getElementById('pPhone').value=""; document.getElementById('pAddress').value=""; document.getElementById('pNotes').value="";
         loadAllData();
     }
 
@@ -154,20 +147,16 @@
 
         const filtered = all.filter(p => p.date === selDate);
         document.getElementById('patientCountDisplay').innerText = `एकूण पेशंट: ${filtered.length}`;
-        document.getElementById('recentDisplay').innerHTML = filtered.reverse().map((p, i) => `
+        
+        // .reverse() काढले आहे जेणेकरून नवीन डेटा खाली येईल
+        document.getElementById('recentDisplay').innerHTML = filtered.map((p, i) => `
             <div class="card ${p.checked?'completed':''}">
                 <div style="display:flex; justify-content:space-between;">
-                    <b>#${filtered.length-i} ${p.name}</b>
+                    <b>#${i + 1} ${p.name}</b>
                     <input type="checkbox" onclick="toggleCheck('${p.id}', this)" ${p.checked?'checked':''} style="width:20px; height:20px;">
                 </div>
-                <div style="font-size:12px; margin:5px 0;">
-                    📍 पत्ता: ${p.address || '-'}<br>
-                    📞 ${p.phone} | 🕒 ${p.time||'--'} | 📝 ${p.notes||'-'}
-                </div>
-                <div style="border-top:1px solid #eee; padding-top:5px;">
-                    <span style="font-size:11px; font-weight:bold;">Next Follow-up:</span>
-                    <input type="date" value="${p.fup_date||''}" onchange="updateFUP('${p.id}', this.value)" style="width:120px; padding:3px; font-size:11px;">
-                </div>
+                <div style="font-size:12px; margin:5px 0;">📍 पत्ता: ${p.address || '-'}<br>📞 ${p.phone} | 🕒 ${p.time||'--'} | 📝 ${p.notes||'-'}</div>
+                <input type="date" value="${p.fup_date||''}" onchange="updateFUP('${p.id}', this.value)" style="width:120px; padding:3px; font-size:11px;">
             </div>
         `).join('') || "<center><br>डेटा उपलब्ध नाही.</center>";
 
@@ -178,7 +167,7 @@
             const diff = Math.ceil((fDate - today) / 86400000);
             let alertType = (p.fup_date===todayStr)?"alert-red":(diff>0 && diff<=2?"alert-yellow":"");
             if(alertType !== "") {
-                const fMsg = `🏥 *साईदत्त क्लिनिक - आरोग्य स्मरण* 🔔\n\nप्रिय *${p.name}*,\nआपला फॉलो-अप उद्या *${formatDate(p.fup_date)}* रोजी आहे. 🩺\n\n👨‍⚕️ *डॉ. रवींद्र घोंगडे*\n📍 ${clinicFullAddress}\n📞 *संपर्क:* ${opdContacts}\n\n*"वेळेवर तपासणी, आरोग्याची खात्री!"* ✅`;
+                const fMsg = `🏥 *साईदत्त क्लिनिक - आरोग्य स्मरण* 🔔\n\nप्रिय *${p.name}*,\nआपला फॉलो-अप उद्या *${formatDate(p.fup_date)}* रोजी आहे. 🩺\n\n👨‍⚕️ *डॉ. रवींद्र घोंगडे*\n📍 ${fullAddress}\n📞 *संपर्क:* ${opdContacts}\n\n*"वेळेवर तपासणी, आरोग्याची खात्री!"* ✅`;
                 remHTML += `<div class="card ${alertType}"><b>${p.name}</b> (${formatDate(p.fup_date)}) <button class="wa-btn" style="float:right" onclick="window.open('https://wa.me/91${p.phone}?text=${encodeURIComponent(fMsg)}')">मेसेज</button></div>`;
             }
         });
@@ -189,7 +178,7 @@
         document.getElementById('masterDisplay').innerHTML = unique.map(p => `<div class="card"><b>${p.name}</b> (${p.phone}) <button class="wa-btn" style="float:right" onclick="sendBroadcast('${p.phone}')">Send</button></div>`).join('');
     }
 
-    async function updateFUP(id, date) { await fetch(SCRIPT_URL, {method:"POST", mode:"no-cors", body:JSON.stringify({action:"updateFUP", id:id, fup_date:date})}); alert("तारीख अपडेट झाली!"); loadAllData(); }
+    async function updateFUP(id, date) { await fetch(SCRIPT_URL, {method:"POST", mode:"no-cors", body:JSON.stringify({action:"updateFUP", id:id, fup_date:date})}); alert("अपडेट झाले!"); loadAllData(); }
     async function toggleCheck(id, el) { el.parentElement.parentElement.classList.toggle('completed'); await fetch(SCRIPT_URL, {method:"POST", mode:"no-cors", body:JSON.stringify({action:"check", id:id, status:el.checked})}); }
     function sendBroadcast(phone) { const msg = document.getElementById('broadcastMsg').value; if(!msg) return alert("मेसेज टाईप करा!"); window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`); }
     function logout() { localStorage.clear(); location.reload(); }
