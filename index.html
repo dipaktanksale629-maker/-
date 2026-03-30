@@ -11,21 +11,18 @@
         input, textarea { width: 100%; padding: 12px; margin-top: 8px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
         .btn { width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; color: white; }
         .btn-save { background: var(--secondary); }
-        .card { border: 1px solid #ddd; padding: 12px; margin-top: 10px; border-radius: 12px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .alert-yellow { background-color: var(--yellow) !important; border-left: 8px solid #fbc02d; }
-        .alert-red { background-color: var(--red) !important; border-left: 8px solid #d32f2f; }
+        .card { border: 1px solid #ddd; padding: 15px; margin-top: 10px; border-radius: 12px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .nav-bar { position: fixed; bottom: 0; width: 100%; max-width: 500px; display: flex; background: white; border-top: 2px solid #eee; z-index: 100; }
         .nav-item { flex: 1; padding: 15px; text-align: center; cursor: pointer; font-weight: bold; color: #666; font-size: 13px; }
         .nav-item.active { color: var(--primary); background: #e8f0fe; border-top: 3px solid var(--primary); }
-        .wa-btn { background: #25D366; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold; margin-top: 5px; }
-        .edit-btn { background: #1a73e8; color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 10px; cursor: pointer; float: right; }
-        .fup-date-text { font-size: 18px; font-weight: bold; color: #d32f2f; display: block; }
+        .wa-btn { background: #25D366; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; width: 100%; margin-top: 10px; }
+        .edit-btn { background: #1a73e8; color: white; border: none; padding: 5px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; float: right; font-weight: bold; }
         .hidden { display: none; }
     </style>
 </head>
 <body>
 
-<div id="appPage" class="container">
+<div class="container">
     <h3 style="color:var(--primary); text-align:center;">🏥 साईदत्त क्लिनिक, सातारा</h3>
 
     <div id="regSection">
@@ -33,163 +30,103 @@
         <input type="hidden" id="editingId">
         <input type="text" id="pName" placeholder="पेशंटचे नाव">
         <input type="number" id="pPhone" placeholder="WhatsApp नंबर">
-        <input type="text" id="pAddress" placeholder="पेशंटचा पत्ता">
+        <input type="text" id="pAddress" placeholder="पत्ता">
         <div style="display:flex; gap:10px;">
             <input type="date" id="pDate">
             <input type="time" id="pTime">
         </div>
-        <textarea id="pNotes" placeholder="तपासणी नोट्स / आजार"></textarea>
+        <textarea id="pNotes" placeholder="नोट्स"></textarea>
         <button class="btn btn-save" id="saveBtn" onclick="saveData()">💾 डेटा सेव्ह करा</button>
         <button class="btn hidden" id="cancelBtn" onclick="cancelEdit()" style="background:#666;">रद्द करा</button>
         
-        <div style="background:#e8f0fe; padding:12px; border-radius:10px; margin-top:20px; border-left: 5px solid var(--primary);">
+        <div style="background:#e8f0fe; padding:12px; border-radius:10px; margin-top:20px;">
             <div style="display:flex; justify-content:space-between; align-items:center;">
                 <b>तारीख निवडा:</b>
-                <input type="date" id="listViewDate" onchange="loadAllData()" style="width:50%; margin:0; padding:5px;">
+                <input type="date" id="listViewDate" onchange="loadAllData()" style="width:55%;">
             </div>
-            <div id="patientCountDisplay" style="font-weight:bold; margin-top:5px; color:var(--primary);">एकूण पेशंट: 0</div>
         </div>
         <div id="recentDisplay">लोड होत आहे...</div>
-    </div>
-
-    <div id="reminderSection" class="hidden">
-        <h4>🔔 फॉलो-अप रिमाइन्डर</h4>
-        <div id="reminderDisplay">लोड होत आहे...</div>
-    </div>
-
-    <div id="broadcastSection" class="hidden">
-        <h4>📢 ब्रॉडकास्ट मेसेज</h4>
-        <textarea id="broadcastMsg" placeholder="मेसेज टाईप करा..."></textarea>
-        <div id="masterDisplay">लोड होत आहे...</div>
-    </div>
-
-    <div class="nav-bar">
-        <div class="nav-item active" id="n1" onclick="show('reg')">नोंदणी</div>
-        <div class="nav-item" id="n2" onclick="show('reminder')">रिमाइन्डर</div>
-        <div class="nav-item" id="n3" onclick="show('broadcast')">ब्रॉडकास्ट</div>
     </div>
 </div>
 
 <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwlIlFgX6eg3CLZzw_CdNtalo0FTAtw5Czf_3jb4GNZmu8GpR0vTL5hKjupqe3jJp0E/exec";
-    const fullAddr = "साई गणेश हॉस्पिटल जवळ, मार्केट यार्ड, राधिका रोड, सातारा.";
-    const contacts = "9604174209 / 0216238539";
     let allPatients = [];
 
-    function formatDate(dStr) {
-        if(!dStr) return "--/--/----";
-        const [y, m, d] = dStr.split('-');
-        return `${d}/${m}/${y}`;
-    }
-
-    function show(sec) {
-        ['regSection', 'reminderSection', 'broadcastSection'].forEach(s => document.getElementById(s).classList.add('hidden'));
-        ['n1', 'n2', 'n3'].forEach(n => document.getElementById(n).classList.remove('active'));
-        document.getElementById(sec+'Section').classList.remove('hidden');
-        document.getElementById(sec==='reg'?'n1':(sec==='reminder'?'n2':'n3')).classList.add('active');
-        loadAllData();
-    }
-
+    // १. डेटा सेव्ह आणि एडिट फंक्शन
     async function saveData() {
-        const id = document.getElementById('editingId').value || Date.now();
-        const pName = document.getElementById('pName').value;
-        const pPhone = document.getElementById('pPhone').value;
-        const pDate = document.getElementById('pDate').value;
-        const pTime = document.getElementById('pTime').value;
-
-        if(!pName || !pPhone) return alert("नाव आणि नंबर आवश्यक!");
-
+        const id = document.getElementById('editingId').value || Date.now().toString();
         const d = {
-            action: "save", id: id, name: pName, phone: pPhone,
+            action: "save",
+            id: id,
+            name: document.getElementById('pName').value,
+            phone: document.getElementById('pPhone').value,
             address: document.getElementById('pAddress').value,
-            date: pDate, time: pTime, notes: document.getElementById('pNotes').value,
+            date: document.getElementById('pDate').value,
+            time: document.getElementById('pTime').value,
+            notes: document.getElementById('pNotes').value,
             userId: "sai@gmail.com"
         };
 
-        // UI वर बदल दाखवण्यासाठी
-        document.getElementById('saveBtn').innerText = "सेव्ह होत आहे...";
-        document.getElementById('saveBtn').disabled = true;
+        if(!d.name || !d.phone) return alert("नाव आणि नंबर भरा!");
 
+        document.getElementById('saveBtn').innerText = "सेव्ह होत आहे...";
         await fetch(SCRIPT_URL, {method:"POST", mode:"no-cors", body:JSON.stringify(d)});
         
-        alert("डेटा यशस्वीरित्या सेव्ह झाला! आता तुम्ही लिस्टमध्ये 'WhatsApp मेसेज' बटण वापरून मेसेज पाठवू शकता.");
-        
-        document.getElementById('saveBtn').innerText = "💾 डेटा सेव्ह करा";
-        document.getElementById('saveBtn').disabled = false;
+        alert("डेटा यशस्वीरित्या सेव्ह झाला!");
         cancelEdit();
         loadAllData();
+        document.getElementById('saveBtn').innerText = "💾 डेटा सेव्ह करा";
     }
 
-    function sendWhatsApp(name, phone, date, time) {
-        const msg = `🏥 *साईदत्त क्लिनिक, सातारा*\n\nनमस्ते *${name}*,\nआपली तपासणीची वेळ निश्चित झाली आहे! ✅\n\n📅 *तारीख:* ${formatDate(date)}\n🕒 *वेळ:* ${time || '--'}\n📍 *पत्ता:* ${fullAddr}\n📞 *संपर्क:* ${contacts}\n\n*वेळेवर उपस्थित राहून सहकार्य करावे. धन्यवाद!* 🙏`;
-        window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`, '_blank');
-    }
-
+    // २. डेटा लोड करणे आणि WhatsApp बटन दाखवणे
     async function loadAllData() {
         const selDate = document.getElementById('listViewDate').value;
         const resp = await fetch(`${SCRIPT_URL}?action=get`);
         allPatients = await resp.json();
         
         const filtered = allPatients.filter(p => p.date === selDate);
-        document.getElementById('patientCountDisplay').innerText = `एकूण पेशंट: ${filtered.length}`;
         document.getElementById('recentDisplay').innerHTML = filtered.map((p, i) => `
-            <div class="card" style="padding: 15px;">
+            <div class="card">
                 <button class="edit-btn" onclick="editPatient('${p.id}')">Edit</button>
-                <b>#${i+1} ${p.name}</b> 
-                <div style="font-size:12px; margin-top:5px;">📍 ${p.address || '-'}<br>📞 ${p.phone} | 🕒 ${p.time || '--'}</div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
-                   <button class="wa-btn" onclick="sendWhatsApp('${p.name}', '${p.phone}', '${p.date}', '${p.time}')">💬 WhatsApp मेसेज</button>
-                   <input type="date" value="${p.fup_date || ''}" onchange="updateFUP('${p.id}', this.value)" style="width:120px; padding:3px; font-size:11px;">
-                </div>
+                <b>#${i+1} ${p.name}</b>
+                <div style="font-size:12px; color:#555; margin-top:5px;">📍 ${p.address || '-'}<br>📞 ${p.phone} | 🕒 ${p.time || '--'}</div>
+                <button class="wa-btn" onclick="sendWA('${p.name}','${p.phone}','${p.date}','${p.time}')">💬 WhatsApp मेसेज पाठवा</button>
             </div>
-        `).join('') || "<center><br>डेटा नाही.</center>";
-
-        // रिमाइंडर लॉजिक
-        const today = new Date().toISOString().split('T')[0];
-        const next2 = new Date(); next2.setDate(next2.getDate() + 2);
-        const next2Str = next2.toISOString().split('T')[0];
-
-        let redHTML = ""; let yellowHTML = "";
-        allPatients.forEach(p => {
-            if(!p.fup_date) return;
-            const fMsg = `🏥 *साईदत्त क्लिनिक*\n\nनमस्ते *${p.name}*,\nआपला फॉलो-अप उद्या *${formatDate(p.fup_date)}* रोजी आहे. 🩺`;
-            const cardHTML = `<div class="card ${p.fup_date === today ? 'alert-red' : 'alert-yellow'}" style="padding: 15px;">
-                <b>${p.name}</b> 
-                <button class="wa-btn" style="float: right;" onclick="window.open('https://wa.me/91${p.phone}?text=${encodeURIComponent(fMsg)}')">💬 मेसेज</button>
-                <span class="fup-date-text">📅 ${formatDate(p.fup_date)}</span>
-            </div>`;
-            if(p.fup_date === today) redHTML += cardHTML;
-            else if(p.fup_date > today && p.fup_date <= next2Str) yellowHTML += cardHTML;
-        });
-        document.getElementById('reminderDisplay').innerHTML = redHTML + yellowHTML || "रिमाइंडर नाहीत.";
+        `).join('') || "<center><br>डेटा उपलब्ध नाही.</center>";
     }
 
+    // ३. एडिट मोड सुरू करणे
     function editPatient(id) {
         const p = allPatients.find(x => x.id == id);
+        if(!p) return;
         document.getElementById('editingId').value = p.id;
         document.getElementById('pName').value = p.name;
         document.getElementById('pPhone').value = p.phone;
-        document.getElementById('pAddress').value = p.address || "";
+        document.getElementById('pAddress').value = p.address;
         document.getElementById('pDate').value = p.date;
-        document.getElementById('pTime').value = p.time || "";
-        document.getElementById('pNotes').value = p.notes || "";
-        document.getElementById('formTitle').innerText = "✏️ पेशंट डेटा सुधारा";
+        document.getElementById('pTime').value = p.time;
+        document.getElementById('pNotes').value = p.notes;
+        
+        document.getElementById('formTitle').innerText = "✏️ डेटा सुधारा (Edit)";
+        document.getElementById('saveBtn').innerText = "🔄 अपडेट करा";
         document.getElementById('cancelBtn').classList.remove('hidden');
         window.scrollTo(0,0);
     }
 
     function cancelEdit() {
         document.getElementById('editingId').value = "";
-        document.getElementById('pName').value = ""; document.getElementById('pPhone').value = "";
-        document.getElementById('pAddress').value = ""; document.getElementById('pNotes').value = "";
+        document.getElementById('pName').value = "";
+        document.getElementById('pPhone').value = "";
+        document.getElementById('pAddress').value = "";
         document.getElementById('formTitle').innerText = "📝 नवीन पेशंट नोंदणी";
+        document.getElementById('saveBtn').innerText = "💾 डेटा सेव्ह करा";
         document.getElementById('cancelBtn').classList.add('hidden');
     }
 
-    async function updateFUP(id, date) {
-        await fetch(SCRIPT_URL, {method:"POST", mode:"no-cors", body:JSON.stringify({action:"updateFUP", id:id, fup_date:date})});
-        alert("फॉलो-अप तारीख अपडेट झाली!");
-        loadAllData();
+    function sendWA(name, phone, date, time) {
+        const msg = `🏥 *साईदत्त क्लिनिक, सातारा*\n\nनमस्ते *${name}*,\nआपली तपासणी निश्चित झाली आहे.\n📅 तारीख: ${date}\n🕒 वेळ: ${time || '--'}\n📍 पत्ता: मार्केट यार्ड, सातारा.\n\nधन्यवाद! 🙏`;
+        window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`, '_blank');
     }
 
     window.onload = () => {
