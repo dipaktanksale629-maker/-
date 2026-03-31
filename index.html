@@ -3,71 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>साईदत्त क्लिनिक - प्रो मॅनेजमेंट</title>
+    <title>साईदत्त क्लिनिक - स्मार्ट मॅनेजमेंट</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        .patient-checked { opacity: 0.5; filter: grayscale(1); }
-        .bg-urgent { background-color: #fee2e2; border-left: 5px solid #ef4444; } /* Red for Today */
-        .bg-upcoming { background-color: #fef9c3; border-left: 5px solid #eab308; } /* Yellow for 2 Days */
+        .patient-checked { opacity: 0.4; filter: grayscale(1); pointer-events: none; }
+        .bg-urgent { background-color: #fee2e2; border-left: 5px solid #ef4444; }
+        .bg-upcoming { background-color: #fef9c3; border-left: 5px solid #eab308; }
     </style>
 </head>
 <body class="bg-slate-100 p-2 md:p-5">
 
     <div class="max-w-6xl mx-auto space-y-6">
-        <div class="bg-white p-4 rounded-xl shadow-md flex flex-wrap justify-between items-center gap-4">
-            <h1 class="text-2xl font-bold text-blue-800"><i class="fas fa-notes-medical"></i> साईदत्त क्लिनिक</h1>
-            <div class="flex items-center gap-2 bg-blue-50 p-2 rounded-lg">
-                <span class="text-sm font-medium">तारीख निवडा:</span>
-                <input type="date" id="filterDate" onchange="loadData()" class="border rounded p-1">
-                <span class="bg-blue-600 text-white px-3 py-1 rounded-full text-sm">Count: <span id="dayCount">0</span></span>
+        <div class="bg-white p-4 rounded-xl shadow-md flex flex-wrap justify-between items-center gap-4 border-b-4 border-blue-600">
+            <h1 class="text-2xl font-bold text-blue-800"><i class="fas fa-clinic-medical"></i> साईदत्त क्लिनिक</h1>
+            <div class="flex items-center gap-2">
+                <input type="date" id="filterDate" onchange="loadData()" class="border rounded p-1 shadow-sm">
+                <span class="bg-blue-600 text-white px-4 py-1 rounded-full font-bold">Count: <span id="dayCount">0</span></span>
             </div>
         </div>
 
-        <div class="flex border-b border-gray-300">
-            <button onclick="showTab('reg')" class="px-6 py-2 bg-white border-t border-l border-r rounded-t-lg font-bold" id="tab-reg">नोंदणी</button>
-            <button onclick="showTab('rem')" class="px-6 py-2 bg-gray-200 rounded-t-lg font-bold" id="tab-rem">रिमांडर्स</button>
-            <button onclick="showTab('broad')" class="px-6 py-2 bg-gray-200 rounded-t-lg font-bold" id="tab-broad">ब्रॉडकास्ट</button>
+        <div class="flex space-x-1">
+            <button onclick="showTab('reg')" id="tab-reg" class="px-6 py-2 bg-white rounded-t-lg font-bold shadow">नोंदणी</button>
+            <button onclick="showTab('rem')" id="tab-rem" class="px-6 py-2 bg-gray-200 rounded-t-lg font-bold shadow">रिमांडर्स</button>
+            <button onclick="showTab('broad')" id="tab-broad" class="px-6 py-2 bg-gray-200 rounded-t-lg font-bold shadow">ब्रॉडकास्ट</button>
         </div>
 
-        <div id="section-reg" class="bg-white p-6 rounded-b-xl shadow-lg">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div id="section-reg" class="bg-white p-6 rounded-b-xl shadow-lg border">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                 <input type="text" id="pName" placeholder="पेशंटचे नाव" class="p-3 border rounded">
                 <input type="number" id="pPhone" placeholder="WhatsApp नंबर" class="p-3 border rounded">
                 <input type="text" id="pAddress" placeholder="पत्ता" class="p-3 border rounded">
                 <input type="date" id="pDate" class="p-3 border rounded">
-                <input type="date" id="fDate" class="p-3 border rounded border-orange-400">
-                <textarea id="pNotes" placeholder="लक्षणे / औषधे" class="p-3 border rounded md:col-span-1"></textarea>
-                <button onclick="saveData()" id="saveBtn" class="bg-blue-600 text-white p-3 rounded-lg font-bold md:col-span-3 hover:bg-blue-700">
-                    <i class="fas fa-plus"></i> पेशंट सेव्ह करा
+                <textarea id="pNotes" placeholder="लक्षणे / माहिती" class="p-3 border rounded md:col-span-3"></textarea>
+                <button onclick="saveData()" id="saveBtn" class="bg-blue-600 text-white p-3 rounded-lg font-bold hover:bg-blue-700 transition-all">
+                    <i class="fas fa-user-plus"></i> नवीन नोंदणी
                 </button>
             </div>
 
             <div class="overflow-x-auto">
-                <table class="w-full text-left border">
-                    <thead class="bg-slate-200">
+                <table class="w-full text-left">
+                    <thead class="bg-blue-50 text-blue-900 border-b">
                         <tr>
                             <th class="p-3">स्थिती</th>
                             <th class="p-3">नाव</th>
                             <th class="p-3">संपर्क</th>
-                            <th class="p-3">फॉलो-अप</th>
+                            <th class="p-3">पुढील भेट (Follow-up)</th>
                             <th class="p-3">ॲक्शन</th>
                         </tr>
                     </thead>
-                    <tbody id="patientTable"></tbody>
+                    <tbody id="patientTable" class="divide-y"></tbody>
                 </table>
             </div>
         </div>
 
         <div id="section-rem" class="hidden bg-white p-6 rounded-xl shadow-lg">
-            <h2 class="text-xl font-bold mb-4 text-orange-700 underline">महत्त्वाचे रिमांडर्स (आज आणि उद्या)</h2>
+            <h2 class="text-xl font-bold mb-4 text-orange-700"><i class="fas fa-bell"></i> आगामी रिमांडर्स</h2>
             <div id="reminderList" class="space-y-3"></div>
         </div>
 
         <div id="section-broad" class="hidden bg-white p-6 rounded-xl shadow-lg">
-            <h2 class="text-xl font-bold mb-4">सर्व पेशंटना ब्रॉडकास्ट मेसेज पाठवा</h2>
-            <textarea id="broadMsg" placeholder="मेसेज इथे टाईप करा..." class="w-full p-4 border rounded-lg h-32"></textarea>
-            <div id="broadcastList" class="mt-4 space-y-2"></div>
+            <h2 class="text-xl font-bold mb-4"><i class="fab fa-whatsapp"></i> ब्रॉडकास्ट मेसेज</h2>
+            <textarea id="broadMsg" placeholder="तुमचा मेसेज इथे लिहा..." class="w-full p-4 border rounded-lg h-32 mb-4 shadow-inner"></textarea>
+            <div id="broadcastList" class="grid grid-cols-1 md:grid-cols-2 gap-2"></div>
         </div>
     </div>
 
@@ -75,7 +73,6 @@
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxfs80OWebQJBjih3OR_UlK50fWBhqyY-IisWbLizflR35Pm7hW0Jhxgdt_AWZJjfAC/exec";
         let allPatients = [];
 
-        // १. टॅब मॅनेजमेंट
         function showTab(tab) {
             document.querySelectorAll('[id^="section-"]').forEach(el => el.classList.add('hidden'));
             document.querySelectorAll('[id^="tab-"]').forEach(el => el.classList.replace('bg-white', 'bg-gray-200'));
@@ -83,27 +80,49 @@
             document.getElementById('tab-' + tab).classList.replace('bg-gray-200', 'bg-white');
         }
 
-        // २. डेटा सेव्ह करणे
         async function saveData() {
             const data = {
                 name: document.getElementById('pName').value,
                 phone: document.getElementById('pPhone').value,
                 address: document.getElementById('pAddress').value,
                 date: document.getElementById('pDate').value || new Date().toISOString().split('T')[0],
-                fdate: document.getElementById('fDate').value,
+                fdate: "", // सुरुवातीला रिकामी
                 notes: document.getElementById('pNotes').value
             };
-            if(!data.name || !data.phone) return alert("नाव आणि नंबर भरा!");
+            if(!data.name || !data.phone) return alert("माहिती अपूर्ण आहे!");
             
-            document.getElementById('saveBtn').innerText = "सेव्ह होत आहे...";
+            document.getElementById('saveBtn').innerText = "प्रक्रिया सुरू आहे...";
             try {
                 await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify(data) });
-                window.open(`https://wa.me/91${data.phone}?text=नमस्कार ${data.name}, तुमची नोंदणी साईदत्त क्लिनिकमध्ये झाली आहे.`, '_blank');
+                alert("नोंदणी झाली!");
                 location.reload();
             } catch(e) { location.reload(); }
         }
 
-        // ३. डेटा लोड आणि फिल्टर करणे
+        // पेशंट चेक झाल्यावर फॉलो-अप तारीख अपडेट करणे
+        async function markAsChecked(index, phone, name) {
+            const nextDate = prompt(`${name} साठी पुढील फॉलो-अप तारीख निवडा (YYYY-MM-DD):`, "");
+            if (!nextDate) return;
+
+            const updateData = { ...allPatients[index], fdate: nextDate, updateIndex: index };
+            
+            // UI वर लगेच परिणाम दिसण्यासाठी
+            document.getElementById(`row-${index}`).classList.add('patient-checked');
+
+            try {
+                // Apps Script कडे अपडेट पाठवा
+                await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ 
+                    action: "updateFollowUp",
+                    rowIndex: index + 2, // Sheet row starts from 1 + header
+                    fdate: nextDate 
+                })});
+                
+                const msg = `नमस्कार ${name},\nसाईदत्त क्लिनिकमध्ये आजची तुमची तपासणी पूर्ण झाली आहे.\nतुमची पुढील भेट (Follow-up): ${nextDate}\nधन्यवाद!`;
+                window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+                location.reload();
+            } catch(e) { alert("अपडेट झाले!"); location.reload(); }
+        }
+
         async function loadData() {
             const table = document.getElementById('patientTable');
             const remList = document.getElementById('reminderList');
@@ -111,7 +130,7 @@
             const fDateInput = document.getElementById('filterDate');
             
             if(!fDateInput.value) fDateInput.value = new Date().toISOString().split('T')[0];
-            const selectedDate = fDateInput.value;
+            const today = fDateInput.value;
 
             try {
                 const res = await fetch(WEB_APP_URL);
@@ -120,71 +139,64 @@
                 let count = 0;
 
                 allPatients.forEach((row, index) => {
-                    const pDate = row[3]; 
-                    const fDate = row[4];
-                    const phone = row[1];
-                    const name = row[0];
+                    const name = row[0], phone = row[1], pDate = row[3], fDate = row[4];
 
-                    // अ) मुख्य टेबल (तारीख नुसार)
-                    if(pDate === selectedDate) {
+                    // १. मुख्य नोंदणी टेबल
+                    if(pDate === today) {
                         count++;
+                        const isChecked = fDate !== "";
                         const tr = document.createElement('tr');
                         tr.id = `row-${index}`;
+                        if(isChecked) tr.classList.add('patient-checked');
                         tr.innerHTML = `
-                            <td class="p-3"><input type="checkbox" onchange="toggleCheck(${index})"></td>
-                            <td class="p-3 font-bold">${name}</td>
+                            <td class="p-3 text-center">
+                                <button onclick="markAsChecked(${index}, '${phone}', '${name}')" class="text-2xl ${isChecked ? 'text-green-600' : 'text-gray-300 hover:text-green-500'}">
+                                    <i class="fas fa-check-circle"></i>
+                                </button>
+                            </td>
+                            <td class="p-3"><b>${name}</b><br><small>${row[2]}</small></td>
                             <td class="p-3">${phone}</td>
-                            <td class="p-3 text-orange-600">${fDate || '-'}</td>
+                            <td class="p-3 font-bold text-orange-600">${fDate || '-'}</td>
                             <td class="p-3">
-                                <button onclick="editPatient(${index})" class="text-blue-600 mr-2"><i class="fas fa-edit"></i></button>
-                                <button onclick="sendWA('${phone}', '${name}')" class="text-green-600"><i class="fab fa-whatsapp"></i></button>
+                                <button onclick="editPatient(${index})" class="p-2 text-blue-600"><i class="fas fa-edit"></i></button>
+                                <button onclick="window.open('https://wa.me/91${phone}')" class="p-2 text-green-600"><i class="fab fa-whatsapp"></i></button>
                             </td>
                         `;
                         table.appendChild(tr);
                     }
 
-                    // ब) रिमांडर्स (आज आणि २ दिवसात)
+                    // २. रिमांडर्स (Logic: जर fDate आज किंवा उद्याची असेल)
                     if(fDate) {
-                        const diff = (new Date(fDate) - new Date(selectedDate)) / (1000*60*60*24);
+                        const diff = (new Date(fDate) - new Date(today)) / (1000*60*60*24);
                         if(diff === 0 || (diff > 0 && diff <= 2)) {
                             const div = document.createElement('div');
-                            div.className = `p-4 rounded shadow-sm flex justify-between items-center ${diff === 0 ? 'bg-urgent' : 'bg-upcoming'}`;
+                            div.className = `p-4 rounded-lg shadow flex justify-between items-center ${diff === 0 ? 'bg-urgent' : 'bg-upcoming'}`;
                             div.innerHTML = `
-                                <div><b>${name}</b> (${phone})<br><small>फॉलो-अप: ${fDate}</small></div>
-                                <button onclick="remindWA('${phone}', '${name}', '${fDate}')" class="bg-green-600 text-white px-3 py-1 rounded text-sm">मेसेज पाठवा</button>
+                                <div><b>${name}</b> (${phone})<br>🗓️ फॉलो-अप: ${fDate}</div>
+                                <button onclick="remindWA('${phone}', '${name}', '${fDate}')" class="bg-green-600 text-white px-4 py-2 rounded-lg font-bold">मेसेज</button>
                             `;
                             remList.appendChild(div);
                         }
                     }
 
-                    // क) ब्रॉडकास्ट लिस्ट
+                    // ३. ब्रॉडकास्ट लिस्ट
                     const bDiv = document.createElement('div');
-                    bDiv.className = "flex justify-between border-b p-2";
-                    bDiv.innerHTML = `<span>${name} (${phone})</span> <button onclick="sendBroadSingle('${phone}')" class="text-green-600 font-bold">Send</button>`;
+                    bDiv.className = "bg-white border p-3 rounded shadow-sm flex justify-between items-center";
+                    bDiv.innerHTML = `<span>${name}</span> <button onclick="sendBroadSingle('${phone}')" class="bg-blue-100 text-blue-700 px-3 py-1 rounded">पाठवा</button>`;
                     broadList.appendChild(bDiv);
                 });
-
                 document.getElementById('dayCount').innerText = count;
-            } catch(e) { console.log(e); }
-        }
-
-        // ४. फीचर्स फंक्शन्स
-        function toggleCheck(idx) {
-            document.getElementById(`row-${idx}`).classList.toggle('patient-checked');
-        }
-
-        function sendWA(num, name) {
-            window.open(`https://wa.me/91${num}?text=नमस्कार ${name}, साईदत्त क्लिनिकमध्ये आपले स्वागत आहे.`, '_blank');
+            } catch(e) { }
         }
 
         function remindWA(num, name, date) {
-            const msg = `नमस्कार ${name}, उद्या/आज ${date} आपली साईदत्त क्लिनिकमध्ये फॉलो-अप वेळ आहे. कृपया लक्षात ठेवा.`;
+            const msg = `नमस्कार ${name},\nउद्या/आज ${date} आपली साईदत्त क्लिनिकमध्ये तपासणी आहे. कृपया वेळेत यावे.`;
             window.open(`https://wa.me/91${num}?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
         function sendBroadSingle(num) {
             const msg = document.getElementById('broadMsg').value;
-            if(!msg) return alert("मेसेज टाईप करा!");
+            if(!msg) return alert("आधी मेसेज लिहा!");
             window.open(`https://wa.me/91${num}?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
@@ -194,10 +206,8 @@
             document.getElementById('pPhone').value = p[1];
             document.getElementById('pAddress').value = p[2];
             document.getElementById('pDate').value = p[3];
-            document.getElementById('fDate').value = p[4];
             document.getElementById('pNotes').value = p[5];
             window.scrollTo(0,0);
-            alert("तुम्ही आता माहिती बदलून पुन्हा 'सेव्ह' करू शकता.");
         }
 
         window.onload = loadData;
