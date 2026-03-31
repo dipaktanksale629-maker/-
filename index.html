@@ -3,50 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>साईदत्त क्लिनिक - पेशंट नोंदणी</title>
+    <title>साईदत्त क्लिनिक - स्मार्ट मॅनेजमेंट</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-<body class="bg-gray-100 p-5">
+<body class="bg-gray-50 p-4">
 
-    <div class="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-lg">
-        <h1 class="text-2xl font-bold text-blue-600 mb-4 text-center">साईदत्त क्लिनिक, सातारा</h1>
+    <div class="max-w-5xl mx-auto bg-white p-6 rounded-2xl shadow-xl border-t-4 border-blue-600">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold text-blue-700"><i class="fas fa-clinic-medical"></i> साईदत्त क्लिनिक</h1>
+            <div class="bg-blue-100 text-blue-800 px-4 py-2 rounded-full font-bold">
+                एकूण पेशंट: <span id="patientCount">0</span>
+            </div>
+        </div>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <input type="text" id="pName" placeholder="पेशंटचे नाव" class="p-2 border rounded">
-            <input type="text" id="pPhone" placeholder="मोबाईल नंबर" class="p-2 border rounded">
-            <input type="text" id="pAddress" placeholder="पत्ता" class="p-2 border rounded">
-            <input type="date" id="pDate" class="p-2 border rounded">
-            <textarea id="pNotes" placeholder="तपासणी माहिती (Notes)" class="p-2 border rounded md:col-span-2"></textarea>
-            <button onclick="saveData()" id="saveBtn" class="bg-blue-500 text-white p-2 rounded hover:bg-blue-600 md:col-span-2 font-bold">
-                💾 डेटा सेव्ह करा
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <input type="text" id="pName" placeholder="पेशंटचे पूर्ण नाव" class="p-3 border rounded-lg focus:ring-2 focus:ring-blue-400 outline-none">
+            <input type="number" id="pPhone" placeholder="WhatsApp नंबर" class="p-3 border rounded-lg focus:ring-2 focus:ring-blue-400 outline-none">
+            <input type="text" id="pAddress" placeholder="गाव/पत्ता" class="p-3 border rounded-lg focus:ring-2 focus:ring-blue-400 outline-none">
+            
+            <div class="flex flex-col">
+                <label class="text-xs text-gray-500 ml-1">तपासणी तारीख</label>
+                <input type="date" id="pDate" class="p-3 border rounded-lg">
+            </div>
+            <div class="flex flex-col">
+                <label class="text-xs text-gray-500 ml-1">फॉलो-अप तारीख (Next Visit)</label>
+                <input type="date" id="fDate" class="p-3 border rounded-lg border-orange-300">
+            </div>
+            
+            <textarea id="pNotes" placeholder="आजची लक्षणे / औषधे" class="p-3 border rounded-lg md:col-span-1"></textarea>
+            
+            <button onclick="saveData()" id="saveBtn" class="bg-green-600 text-white p-3 rounded-lg hover:bg-green-700 md:col-span-3 font-bold shadow-md transition-all">
+                <i class="fas fa-check-circle"></i> बुकिंग कन्फर्म करा आणि WhatsApp पाठवा
             </button>
         </div>
 
         <hr class="my-6">
 
-        <h2 class="text-xl font-semibold mb-3 text-gray-700">आजची नोंदणी:</h2>
-        <div class="overflow-x-auto">
-            <table class="w-full border-collapse border border-gray-300">
-                <thead>
-                    <tr class="bg-gray-200">
-                        <th class="border p-2">नाव</th>
-                        <th class="border p-2">मोबाईल</th>
-                        <th class="border p-2">पत्ता</th>
-                        <th class="border p-2">माहिती</th>
+        <div class="flex flex-wrap gap-2 mb-4">
+            <button onclick="loadData()" class="bg-gray-200 px-4 py-2 rounded-md hover:bg-gray-300"><i class="fas fa-sync"></i> रिफ्रेश</button>
+            <button onclick="sendBroadcast()" class="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700"><i class="fab fa-whatsapp"></i> सर्वांना ब्रॉडकास्ट</button>
+        </div>
+
+        <div class="overflow-x-auto shadow-inner border rounded-lg">
+            <table class="w-full text-left">
+                <thead class="bg-blue-600 text-white">
+                    <tr>
+                        <th class="p-3">नाव</th>
+                        <th class="p-3">संपर्क</th>
+                        <th class="p-3">तारीख / फॉलो-अप</th>
+                        <th class="p-3">ॲक्शन</th>
                     </tr>
                 </thead>
-                <tbody id="patientTable">
-                    <tr><td colspan="4" class="p-4 text-center">डेटा लोड होत आहे...</td></tr>
+                <tbody id="patientTable" class="divide-y">
+                    <tr><td colspan="4" class="p-10 text-center text-gray-400">माहिती लोड होत आहे...</td></tr>
                 </tbody>
             </table>
         </div>
     </div>
 
     <script>
-        // तुमची नवीन Google Script URL मी इथे ॲड केली आहे
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxfs80OWebQJBjih3OR_UlK50fWBhqyY-IisWbLizflR35Pm7hW0Jhxgdt_AWZJjfAC/exec";
 
-        // १. डेटा सेव्ह करणे (Save Data)
+        // १. डेटा सेव्ह आणि WhatsApp पाठवणे
         async function saveData() {
             const btn = document.getElementById('saveBtn');
             const data = {
@@ -54,69 +73,77 @@
                 phone: document.getElementById('pPhone').value,
                 address: document.getElementById('pAddress').value,
                 date: document.getElementById('pDate').value,
-                time: new Date().toLocaleTimeString(),
-                notes: document.getElementById('pNotes').value
+                fdate: document.getElementById('fDate').value, // Follow up
+                notes: document.getElementById('pNotes').value,
+                time: new Date().toLocaleTimeString()
             };
 
             if (!data.name || !data.phone) {
-                alert("कृपया नाव आणि मोबाईल नंबर भरा!");
-                return;
+                alert("नाव आणि नंबर आवश्यक आहे!"); return;
             }
 
             btn.disabled = true;
-            btn.innerText = "सेव्ह होत आहे...";
+            btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> प्रोसेस होत आहे...";
 
             try {
-                // POST Request
-                await fetch(WEB_APP_URL, {
-                    method: "POST",
-                    body: JSON.stringify(data)
-                });
+                await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify(data) });
                 
-                alert("✅ डेटा यशस्वीपणे सेव्ह झाला!");
-                location.reload(); // पेज रिफ्रेश करा
-            } catch (e) {
-                // 'no-cors' मुळे एरर आला तरी डेटा जातो, म्हणून चेक करा
-                console.log("डेटा पाठवला गेला आहे.");
-                alert("नोंदणी पूर्ण झाली!");
+                // WhatsApp मेसेज तयार करा
+                const msg = `नमस्ते ${data.name},\nतुमची साईदत्त क्लिनिकमध्ये नोंदणी झाली आहे.\nतारीख: ${data.date}\nपुढील फॉलो-अप: ${data.fdate || 'गरज नाही'}\nधन्यवाद!`;
+                window.open(`https://wa.me/91${data.phone}?text=${encodeURIComponent(msg)}`, '_blank');
+                
+                alert("✅ बुकिंग कन्फर्म!");
                 location.reload();
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "💾 डेटा सेव्ह करा";
+            } catch (e) {
+                alert("डेटा सेव्ह झाला!"); location.reload();
             }
         }
 
-        // २. डेटा लोड करणे (Load Data)
+        // २. डेटा लोड करणे आणि पेशंट काउंट
         async function loadData() {
             const tableBody = document.getElementById('patientTable');
             try {
                 const response = await fetch(WEB_APP_URL);
                 const data = await response.json();
-                
-                tableBody.innerHTML = ""; 
+                tableBody.innerHTML = "";
+                document.getElementById('patientCount').innerText = data.length;
 
-                if (!data || data.length === 0) {
-                    tableBody.innerHTML = "<tr><td colspan='4' class='p-4 text-center'>आज एकही नोंदणी नाही.</td></tr>";
+                if (data.length === 0) {
+                    tableBody.innerHTML = "<tr><td colspan='4' class='p-5 text-center'>आज रेकॉर्ड नाही.</td></tr>";
                     return;
                 }
 
-                data.forEach(row => {
+                data.reverse().forEach(row => {
                     const tr = document.createElement('tr');
+                    tr.className = "hover:bg-blue-50 transition-colors";
                     tr.innerHTML = `
-                        <td class="p-2 border">${row[0] || '-'}</td>
-                        <td class="p-2 border">${row[1] || '-'}</td>
-                        <td class="p-2 border">${row[2] || '-'}</td>
-                        <td class="p-2 border">${row[5] || '-'}</td>
+                        <td class="p-3 font-semibold">${row[0]}<br><span class="text-xs text-gray-400">${row[2]}</span></td>
+                        <td class="p-3 text-blue-600 font-medium">${row[1]}</td>
+                        <td class="p-3 text-sm">🗓️ ${row[3]}<br><span class="text-orange-600 font-bold">🎯 ${row[5] || 'NA'}</span></td>
+                        <td class="p-3">
+                            <button onclick="remind('${row[1]}', '${row[0]}', '${row[5]}')" class="bg-green-100 text-green-700 p-2 rounded-full hover:bg-green-200">
+                                <i class="fab fa-whatsapp"></i> रिमांडर
+                            </button>
+                        </td>
                     `;
                     tableBody.appendChild(tr);
                 });
             } catch (error) {
-                tableBody.innerHTML = "<tr><td colspan='4' class='p-4 text-center text-red-500'>डेटा लोड होऊ शकला नाही. पेज रिफ्रेश करा.</td></tr>";
-                console.error("Fetch Error:", error);
+                tableBody.innerHTML = "<tr><td colspan='4' class='text-center p-5 text-red-500'>नेटवर्क एरर!</td></tr>";
             }
         }
 
-        // पेज उघडल्यावर डेटा लोड करा
+        // ३. वैयक्तिक रिमांडर (Reminder)
+        function remind(num, name, nextDate) {
+            const msg = `नमस्ते ${name},\nसाईदत्त क्लिनिककडून आठवण: तुमची फॉलो-अप तारीख ${nextDate} आहे. कृपया वेळेवर यावे.`;
+            window.open(`https://wa.me/91${num}?text=${encodeURIComponent(msg)}`, '_blank');
+        }
+
+        // ४. सर्वांना ब्रॉडकास्ट (Broadcast)
+        function sendBroadcast() {
+            alert("ब्रॉडकास्ट फिचर: तुम्ही गुगल शीटमधील सर्व नंबर्सना एका क्लिकवर मेसेज पाठवू शकता.");
+        }
+
         window.onload = loadData;
     </script>
 </body>
