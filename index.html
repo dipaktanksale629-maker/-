@@ -3,145 +3,201 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>साईदत्त क्लिनिक - स्मार्ट मॅनेजमेंट</title>
+    <title>साईदत्त क्लिनिक - प्रो मॅनेजमेंट</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .patient-checked { opacity: 0.5; filter: grayscale(1); }
+        .bg-urgent { background-color: #fee2e2; border-left: 5px solid #ef4444; } /* Red for Today */
+        .bg-upcoming { background-color: #fef9c3; border-left: 5px solid #eab308; } /* Yellow for 2 Days */
+    </style>
 </head>
-<body class="bg-gray-50 p-4">
+<body class="bg-slate-100 p-2 md:p-5">
 
-    <div class="max-w-5xl mx-auto bg-white p-6 rounded-2xl shadow-xl border-t-4 border-blue-600">
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-2xl font-bold text-blue-700"><i class="fas fa-clinic-medical"></i> साईदत्त क्लिनिक</h1>
-            <div class="bg-blue-100 text-blue-800 px-4 py-2 rounded-full font-bold">
-                एकूण पेशंट: <span id="patientCount">0</span>
+    <div class="max-w-6xl mx-auto space-y-6">
+        <div class="bg-white p-4 rounded-xl shadow-md flex flex-wrap justify-between items-center gap-4">
+            <h1 class="text-2xl font-bold text-blue-800"><i class="fas fa-notes-medical"></i> साईदत्त क्लिनिक</h1>
+            <div class="flex items-center gap-2 bg-blue-50 p-2 rounded-lg">
+                <span class="text-sm font-medium">तारीख निवडा:</span>
+                <input type="date" id="filterDate" onchange="loadData()" class="border rounded p-1">
+                <span class="bg-blue-600 text-white px-3 py-1 rounded-full text-sm">Count: <span id="dayCount">0</span></span>
             </div>
         </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <input type="text" id="pName" placeholder="पेशंटचे पूर्ण नाव" class="p-3 border rounded-lg focus:ring-2 focus:ring-blue-400 outline-none">
-            <input type="number" id="pPhone" placeholder="WhatsApp नंबर" class="p-3 border rounded-lg focus:ring-2 focus:ring-blue-400 outline-none">
-            <input type="text" id="pAddress" placeholder="गाव/पत्ता" class="p-3 border rounded-lg focus:ring-2 focus:ring-blue-400 outline-none">
-            
-            <div class="flex flex-col">
-                <label class="text-xs text-gray-500 ml-1">तपासणी तारीख</label>
-                <input type="date" id="pDate" class="p-3 border rounded-lg">
-            </div>
-            <div class="flex flex-col">
-                <label class="text-xs text-gray-500 ml-1">फॉलो-अप तारीख (Next Visit)</label>
-                <input type="date" id="fDate" class="p-3 border rounded-lg border-orange-300">
-            </div>
-            
-            <textarea id="pNotes" placeholder="आजची लक्षणे / औषधे" class="p-3 border rounded-lg md:col-span-1"></textarea>
-            
-            <button onclick="saveData()" id="saveBtn" class="bg-green-600 text-white p-3 rounded-lg hover:bg-green-700 md:col-span-3 font-bold shadow-md transition-all">
-                <i class="fas fa-check-circle"></i> बुकिंग कन्फर्म करा आणि WhatsApp पाठवा
-            </button>
+
+        <div class="flex border-b border-gray-300">
+            <button onclick="showTab('reg')" class="px-6 py-2 bg-white border-t border-l border-r rounded-t-lg font-bold" id="tab-reg">नोंदणी</button>
+            <button onclick="showTab('rem')" class="px-6 py-2 bg-gray-200 rounded-t-lg font-bold" id="tab-rem">रिमांडर्स</button>
+            <button onclick="showTab('broad')" class="px-6 py-2 bg-gray-200 rounded-t-lg font-bold" id="tab-broad">ब्रॉडकास्ट</button>
         </div>
 
-        <hr class="my-6">
+        <div id="section-reg" class="bg-white p-6 rounded-b-xl shadow-lg">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <input type="text" id="pName" placeholder="पेशंटचे नाव" class="p-3 border rounded">
+                <input type="number" id="pPhone" placeholder="WhatsApp नंबर" class="p-3 border rounded">
+                <input type="text" id="pAddress" placeholder="पत्ता" class="p-3 border rounded">
+                <input type="date" id="pDate" class="p-3 border rounded">
+                <input type="date" id="fDate" class="p-3 border rounded border-orange-400">
+                <textarea id="pNotes" placeholder="लक्षणे / औषधे" class="p-3 border rounded md:col-span-1"></textarea>
+                <button onclick="saveData()" id="saveBtn" class="bg-blue-600 text-white p-3 rounded-lg font-bold md:col-span-3 hover:bg-blue-700">
+                    <i class="fas fa-plus"></i> पेशंट सेव्ह करा
+                </button>
+            </div>
 
-        <div class="flex flex-wrap gap-2 mb-4">
-            <button onclick="loadData()" class="bg-gray-200 px-4 py-2 rounded-md hover:bg-gray-300"><i class="fas fa-sync"></i> रिफ्रेश</button>
-            <button onclick="sendBroadcast()" class="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700"><i class="fab fa-whatsapp"></i> सर्वांना ब्रॉडकास्ट</button>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border">
+                    <thead class="bg-slate-200">
+                        <tr>
+                            <th class="p-3">स्थिती</th>
+                            <th class="p-3">नाव</th>
+                            <th class="p-3">संपर्क</th>
+                            <th class="p-3">फॉलो-अप</th>
+                            <th class="p-3">ॲक्शन</th>
+                        </tr>
+                    </thead>
+                    <tbody id="patientTable"></tbody>
+                </table>
+            </div>
         </div>
 
-        <div class="overflow-x-auto shadow-inner border rounded-lg">
-            <table class="w-full text-left">
-                <thead class="bg-blue-600 text-white">
-                    <tr>
-                        <th class="p-3">नाव</th>
-                        <th class="p-3">संपर्क</th>
-                        <th class="p-3">तारीख / फॉलो-अप</th>
-                        <th class="p-3">ॲक्शन</th>
-                    </tr>
-                </thead>
-                <tbody id="patientTable" class="divide-y">
-                    <tr><td colspan="4" class="p-10 text-center text-gray-400">माहिती लोड होत आहे...</td></tr>
-                </tbody>
-            </table>
+        <div id="section-rem" class="hidden bg-white p-6 rounded-xl shadow-lg">
+            <h2 class="text-xl font-bold mb-4 text-orange-700 underline">महत्त्वाचे रिमांडर्स (आज आणि उद्या)</h2>
+            <div id="reminderList" class="space-y-3"></div>
+        </div>
+
+        <div id="section-broad" class="hidden bg-white p-6 rounded-xl shadow-lg">
+            <h2 class="text-xl font-bold mb-4">सर्व पेशंटना ब्रॉडकास्ट मेसेज पाठवा</h2>
+            <textarea id="broadMsg" placeholder="मेसेज इथे टाईप करा..." class="w-full p-4 border rounded-lg h-32"></textarea>
+            <div id="broadcastList" class="mt-4 space-y-2"></div>
         </div>
     </div>
 
     <script>
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxfs80OWebQJBjih3OR_UlK50fWBhqyY-IisWbLizflR35Pm7hW0Jhxgdt_AWZJjfAC/exec";
+        let allPatients = [];
 
-        // १. डेटा सेव्ह आणि WhatsApp पाठवणे
+        // १. टॅब मॅनेजमेंट
+        function showTab(tab) {
+            document.querySelectorAll('[id^="section-"]').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('[id^="tab-"]').forEach(el => el.classList.replace('bg-white', 'bg-gray-200'));
+            document.getElementById('section-' + tab).classList.remove('hidden');
+            document.getElementById('tab-' + tab).classList.replace('bg-gray-200', 'bg-white');
+        }
+
+        // २. डेटा सेव्ह करणे
         async function saveData() {
-            const btn = document.getElementById('saveBtn');
             const data = {
                 name: document.getElementById('pName').value,
                 phone: document.getElementById('pPhone').value,
                 address: document.getElementById('pAddress').value,
-                date: document.getElementById('pDate').value,
-                fdate: document.getElementById('fDate').value, // Follow up
-                notes: document.getElementById('pNotes').value,
-                time: new Date().toLocaleTimeString()
+                date: document.getElementById('pDate').value || new Date().toISOString().split('T')[0],
+                fdate: document.getElementById('fDate').value,
+                notes: document.getElementById('pNotes').value
             };
-
-            if (!data.name || !data.phone) {
-                alert("नाव आणि नंबर आवश्यक आहे!"); return;
-            }
-
-            btn.disabled = true;
-            btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> प्रोसेस होत आहे...";
-
+            if(!data.name || !data.phone) return alert("नाव आणि नंबर भरा!");
+            
+            document.getElementById('saveBtn').innerText = "सेव्ह होत आहे...";
             try {
                 await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify(data) });
-                
-                // WhatsApp मेसेज तयार करा
-                const msg = `नमस्ते ${data.name},\nतुमची साईदत्त क्लिनिकमध्ये नोंदणी झाली आहे.\nतारीख: ${data.date}\nपुढील फॉलो-अप: ${data.fdate || 'गरज नाही'}\nधन्यवाद!`;
-                window.open(`https://wa.me/91${data.phone}?text=${encodeURIComponent(msg)}`, '_blank');
-                
-                alert("✅ बुकिंग कन्फर्म!");
+                window.open(`https://wa.me/91${data.phone}?text=नमस्कार ${data.name}, तुमची नोंदणी साईदत्त क्लिनिकमध्ये झाली आहे.`, '_blank');
                 location.reload();
-            } catch (e) {
-                alert("डेटा सेव्ह झाला!"); location.reload();
-            }
+            } catch(e) { location.reload(); }
         }
 
-        // २. डेटा लोड करणे आणि पेशंट काउंट
+        // ३. डेटा लोड आणि फिल्टर करणे
         async function loadData() {
-            const tableBody = document.getElementById('patientTable');
+            const table = document.getElementById('patientTable');
+            const remList = document.getElementById('reminderList');
+            const broadList = document.getElementById('broadcastList');
+            const fDateInput = document.getElementById('filterDate');
+            
+            if(!fDateInput.value) fDateInput.value = new Date().toISOString().split('T')[0];
+            const selectedDate = fDateInput.value;
+
             try {
-                const response = await fetch(WEB_APP_URL);
-                const data = await response.json();
-                tableBody.innerHTML = "";
-                document.getElementById('patientCount').innerText = data.length;
+                const res = await fetch(WEB_APP_URL);
+                allPatients = await res.json();
+                table.innerHTML = ""; remList.innerHTML = ""; broadList.innerHTML = "";
+                let count = 0;
 
-                if (data.length === 0) {
-                    tableBody.innerHTML = "<tr><td colspan='4' class='p-5 text-center'>आज रेकॉर्ड नाही.</td></tr>";
-                    return;
-                }
+                allPatients.forEach((row, index) => {
+                    const pDate = row[3]; 
+                    const fDate = row[4];
+                    const phone = row[1];
+                    const name = row[0];
 
-                data.reverse().forEach(row => {
-                    const tr = document.createElement('tr');
-                    tr.className = "hover:bg-blue-50 transition-colors";
-                    tr.innerHTML = `
-                        <td class="p-3 font-semibold">${row[0]}<br><span class="text-xs text-gray-400">${row[2]}</span></td>
-                        <td class="p-3 text-blue-600 font-medium">${row[1]}</td>
-                        <td class="p-3 text-sm">🗓️ ${row[3]}<br><span class="text-orange-600 font-bold">🎯 ${row[5] || 'NA'}</span></td>
-                        <td class="p-3">
-                            <button onclick="remind('${row[1]}', '${row[0]}', '${row[5]}')" class="bg-green-100 text-green-700 p-2 rounded-full hover:bg-green-200">
-                                <i class="fab fa-whatsapp"></i> रिमांडर
-                            </button>
-                        </td>
-                    `;
-                    tableBody.appendChild(tr);
+                    // अ) मुख्य टेबल (तारीख नुसार)
+                    if(pDate === selectedDate) {
+                        count++;
+                        const tr = document.createElement('tr');
+                        tr.id = `row-${index}`;
+                        tr.innerHTML = `
+                            <td class="p-3"><input type="checkbox" onchange="toggleCheck(${index})"></td>
+                            <td class="p-3 font-bold">${name}</td>
+                            <td class="p-3">${phone}</td>
+                            <td class="p-3 text-orange-600">${fDate || '-'}</td>
+                            <td class="p-3">
+                                <button onclick="editPatient(${index})" class="text-blue-600 mr-2"><i class="fas fa-edit"></i></button>
+                                <button onclick="sendWA('${phone}', '${name}')" class="text-green-600"><i class="fab fa-whatsapp"></i></button>
+                            </td>
+                        `;
+                        table.appendChild(tr);
+                    }
+
+                    // ब) रिमांडर्स (आज आणि २ दिवसात)
+                    if(fDate) {
+                        const diff = (new Date(fDate) - new Date(selectedDate)) / (1000*60*60*24);
+                        if(diff === 0 || (diff > 0 && diff <= 2)) {
+                            const div = document.createElement('div');
+                            div.className = `p-4 rounded shadow-sm flex justify-between items-center ${diff === 0 ? 'bg-urgent' : 'bg-upcoming'}`;
+                            div.innerHTML = `
+                                <div><b>${name}</b> (${phone})<br><small>फॉलो-अप: ${fDate}</small></div>
+                                <button onclick="remindWA('${phone}', '${name}', '${fDate}')" class="bg-green-600 text-white px-3 py-1 rounded text-sm">मेसेज पाठवा</button>
+                            `;
+                            remList.appendChild(div);
+                        }
+                    }
+
+                    // क) ब्रॉडकास्ट लिस्ट
+                    const bDiv = document.createElement('div');
+                    bDiv.className = "flex justify-between border-b p-2";
+                    bDiv.innerHTML = `<span>${name} (${phone})</span> <button onclick="sendBroadSingle('${phone}')" class="text-green-600 font-bold">Send</button>`;
+                    broadList.appendChild(bDiv);
                 });
-            } catch (error) {
-                tableBody.innerHTML = "<tr><td colspan='4' class='text-center p-5 text-red-500'>नेटवर्क एरर!</td></tr>";
-            }
+
+                document.getElementById('dayCount').innerText = count;
+            } catch(e) { console.log(e); }
         }
 
-        // ३. वैयक्तिक रिमांडर (Reminder)
-        function remind(num, name, nextDate) {
-            const msg = `नमस्ते ${name},\nसाईदत्त क्लिनिककडून आठवण: तुमची फॉलो-अप तारीख ${nextDate} आहे. कृपया वेळेवर यावे.`;
+        // ४. फीचर्स फंक्शन्स
+        function toggleCheck(idx) {
+            document.getElementById(`row-${idx}`).classList.toggle('patient-checked');
+        }
+
+        function sendWA(num, name) {
+            window.open(`https://wa.me/91${num}?text=नमस्कार ${name}, साईदत्त क्लिनिकमध्ये आपले स्वागत आहे.`, '_blank');
+        }
+
+        function remindWA(num, name, date) {
+            const msg = `नमस्कार ${name}, उद्या/आज ${date} आपली साईदत्त क्लिनिकमध्ये फॉलो-अप वेळ आहे. कृपया लक्षात ठेवा.`;
             window.open(`https://wa.me/91${num}?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
-        // ४. सर्वांना ब्रॉडकास्ट (Broadcast)
-        function sendBroadcast() {
-            alert("ब्रॉडकास्ट फिचर: तुम्ही गुगल शीटमधील सर्व नंबर्सना एका क्लिकवर मेसेज पाठवू शकता.");
+        function sendBroadSingle(num) {
+            const msg = document.getElementById('broadMsg').value;
+            if(!msg) return alert("मेसेज टाईप करा!");
+            window.open(`https://wa.me/91${num}?text=${encodeURIComponent(msg)}`, '_blank');
+        }
+
+        function editPatient(idx) {
+            const p = allPatients[idx];
+            document.getElementById('pName').value = p[0];
+            document.getElementById('pPhone').value = p[1];
+            document.getElementById('pAddress').value = p[2];
+            document.getElementById('pDate').value = p[3];
+            document.getElementById('fDate').value = p[4];
+            document.getElementById('pNotes').value = p[5];
+            window.scrollTo(0,0);
+            alert("तुम्ही आता माहिती बदलून पुन्हा 'सेव्ह' करू शकता.");
         }
 
         window.onload = loadData;
