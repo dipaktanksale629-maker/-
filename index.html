@@ -1,100 +1,77 @@
-<!DOCTYPE html>
-<html lang="mr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>साईदत्त क्लिनिक</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-blue-50 p-4">
-    <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-md p-6">
-        <h2 class="text-2xl font-bold text-center text-blue-700 mb-4">🏥 साईदत्त क्लिनिक</h2>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <input type="text" id="pName" placeholder="पेशंटचे नाव" class="border p-2 rounded">
-            <input type="number" id="pPhone" placeholder="WhatsApp नंबर" class="border p-2 rounded">
-            <input type="text" id="pAddress" placeholder="पत्ता" class="border p-2 rounded">
-            <input type="date" id="pDate" class="border p-2 rounded">
-            <textarea id="pNotes" placeholder="तपासणी नोट्स" class="border p-2 rounded md:col-span-2"></textarea>
-            <button onclick="saveData()" id="saveBtn" class="md:col-span-2 bg-green-600 text-white py-3 rounded-lg font-bold">💾 डेटा सेव्ह करा</button>
-        </div>
+<script>
+    // तुमची नवीन Google Script URL
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxz536zf952R392X4Aw8aZDz7BNhQfuklG5q0qzkG7aA11U4_iP9gKTjhnIHVKt2Fg/exec";
 
-        <hr class="my-6">
+    // १. डेटा सेव्ह करणे (Save Data)
+    async function saveData() {
+        const btn = document.getElementById('saveBtn');
+        const data = {
+            name: document.getElementById('pName').value,
+            phone: document.getElementById('pPhone').value,
+            address: document.getElementById('pAddress').value,
+            date: document.getElementById('pDate').value,
+            time: new Date().toLocaleTimeString(),
+            notes: document.getElementById('pNotes').value
+        };
 
-        <h3 class="text-xl font-bold mb-3 text-blue-800">📋 आजच्या नोंदणी</h3>
-        <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-                <thead>
-                    <tr class="bg-blue-100">
-                        <th class="p-2 border">नाव</th>
-                        <th class="p-2 border">नंबर</th>
-                        <th class="p-2 border">पत्ता</th>
-                        <th class="p-2 border">नोट्स</th>
-                    </tr>
-                </thead>
-                <tbody id="patientTable">
-                    <tr><td colspan="4" class="p-4 text-center">डेटा लोड होत आहे...</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <script>
-        const WEB_APP_URL = "तुमची_GOOGLE_SHEET_WEB_APP_URL_इथे_टाका";
-
-        // १. डेटा सेव्ह करणे
-        async function saveData() {
-            const btn = document.getElementById('saveBtn');
-            const data = {
-                name: document.getElementById('pName').value,
-                phone: document.getElementById('pPhone').value,
-                address: document.getElementById('pAddress').value,
-                date: document.getElementById('pDate').value,
-                time: new Date().toLocaleTimeString(),
-                notes: document.getElementById('pNotes').value
-            };
-
-            if(!data.name) return alert("नाव भरा!");
-
-            btn.disabled = true;
-            btn.innerText = "सेव्ह होत आहे...";
-
-            try {
-                await fetch(WEB_APP_URL, {
-                    method: "POST",
-                    mode: "no-cors",
-                    body: JSON.stringify(data)
-                });
-                alert("✅ सेव्ह झाला!");
-                location.reload(); // पेज रिफ्रेश करून नवीन डेटा दाखवा
-            } catch (e) {
-                alert("❌ एरर आली!");
-            }
+        if (!data.name || !data.phone) {
+            alert("कृपया नाव आणि मोबाईल नंबर भरा!");
+            return;
         }
 
-        // २. डेटा डिस्प्ले करणे
-        async function loadData() {
-            try {
-                const res = await fetch(WEB_APP_URL);
-                const data = await res.json();
-                const table = document.getElementById('patientTable');
-                table.innerHTML = "";
+        btn.disabled = true;
+        btn.innerText = "सेव्ह होत आहे...";
 
-                data.forEach(row => {
-                    const tr = `<tr>
-                        <td class="p-2 border">${row[0]}</td>
-                        <td class="p-2 border">${row[1]}</td>
-                        <td class="p-2 border">${row[2]}</td>
-                        <td class="p-2 border">${row[5]}</td>
-                    </tr>`;
-                    table.innerHTML += tr;
-                });
-            } catch (e) {
-                document.getElementById('patientTable').innerHTML = "<tr><td colspan='4' class='p-4 text-center text-red-500'>डेटा दाखवण्यात अडचण येत आहे.</td></tr>";
-            }
+        try {
+            // POST request (No-CORS मोडमध्ये डेटा फक्त पाठवला जातो)
+            await fetch(WEB_APP_URL, {
+                method: "POST",
+                mode: "no-cors",
+                body: JSON.stringify(data)
+            });
+            
+            alert("✅ डेटा यशस्वीपणे सेव्ह झाला!");
+            location.reload(); // पेज रिफ्रेश करून नवीन डेटा दाखवा
+        } catch (e) {
+            alert("❌ एरर: डेटा सेव्ह झाला नाही.");
+            console.error(e);
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "💾 डेटा सेव्ह करा";
         }
+    }
 
-        window.onload = loadData;
-    </script>
-</body>
-</html>
+    // २. डेटा लोड करणे (Load Data)
+    async function loadData() {
+        const tableBody = document.getElementById('patientTable');
+        try {
+            const response = await fetch(WEB_APP_URL);
+            const data = await response.json();
+
+            tableBody.innerHTML = ""; // जुना मेसेज पुसून टाका
+
+            if (data.length === 0) {
+                tableBody.innerHTML = "<tr><td colspan='4' class='p-4 text-center'>आज एकही नोंदणी नाही.</td></tr>";
+                return;
+            }
+
+            // डेटा टेबलमध्ये भरून दाखवणे
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="p-2 border">${row[0]}</td>
+                    <td class="p-2 border">${row[1]}</td>
+                    <td class="p-2 border">${row[2]}</td>
+                    <td class="p-2 border">${row[5] || '-'}</td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        } catch (error) {
+            tableBody.innerHTML = "<tr><td colspan='4' class='p-4 text-center text-red-500'>नेटवर्क तपासा किंवा पेज रिफ्रेश करा.</td></tr>";
+            console.error("Fetch Error:", error);
+        }
+    }
+
+    // पेज उघडल्यावर डेटा दाखवा
+    window.onload = loadData;
+</script>
