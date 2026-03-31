@@ -112,7 +112,7 @@
             document.getElementById('saveBtn').innerText = "नोंदणी होत आहे...";
             try {
                 await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify(data) });
-                const msg = `*साईदत्त क्लिनिक, सातारा* ✨\n\nनमस्ते ${data.name} जी,\n\nतुमची आजची वेळ यशस्वीपणे नोंदवली गेली आहे.\n🗓️ तारीख: *${formatDateMarathi(data.date)}*\n⏰ वेळ: *${data.time}*\n\nआमच्यासाठी तुमचे आरोग्य हीच प्राथमिकता आहे. \n\n_"आरोग्यं धनसंपदा"_ 🌱\n- साईदत्त क्लिनिक`;
+                const msg = `*साईदत्त क्लिनिक, सातारा* ✨\n\nनमस्ते ${data.name} जी,\n\nतुमची आजची वेळ यशस्वीपणे नोंदवली गेली आहे.\n🗓️ तारीख: *${formatDateMarathi(data.date)}*\n⏰ वेळ: *${data.time}*\n\nआमच्यासाठी तुमचे आरोग्य हीच प्राथमिकता आहे. \n\n_"आरोग्यं धनसंपदा"_ 🌱\n\nआपला नम्र,\n*डॉ. रवींद्र घोंगडे*`;
                 window.open(`https://wa.me/91${data.phone}?text=${encodeURIComponent(msg)}`, '_blank');
                 location.reload();
             } catch(e) { location.reload(); }
@@ -125,7 +125,7 @@
                 if (!nextDate) return;
                 try {
                     await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "updateFollowUp", rowIndex: index + 2, fdate: nextDate })});
-                    const msg = `*साईदत्त क्लिनिक - पुढील भेट* ❤️\n\nप्रिय ${name} जी,\n\nतुमची आजची तपासणी पूर्ण झाली आहे. पुढील उपचारांसाठी तुमची तारीख *${formatDateMarathi(nextDate)}* निश्चित केली आहे.\n\nनिरोगी आयुष्यासाठी आम्ही सदैव सोबत आहोत!\n\n_"निरोगी राहा, आनंदी राहा"_ 🌸\n- साईदत्त क्लिनिक`;
+                    const msg = `*साईदत्त क्लिनिक - पुढील भेट* ❤️\n\nप्रिय ${name} जी,\n\nतुमची आजची तपासणी पूर्ण झाली आहे. पुढील उपचारांसाठी तुमची तारीख *${formatDateMarathi(nextDate)}* निश्चित केली आहे.\n\nनिरोगी आयुष्यासाठी आम्ही सदैव सोबत आहोत!\n\n_"निरोगी राहा, आनंदी राहा"_ 🌸\n\nआपला नम्र,\n*डॉ. रवींद्र घोंगडे*`;
                     window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`, '_blank');
                     location.reload();
                 } catch(e) { location.reload(); }
@@ -166,7 +166,6 @@
                         table.appendChild(tr);
                     }
 
-                    // Reminder Logic Added Back
                     if(fDate) {
                         const diff = (new Date(fDate) - new Date(today)) / (1000*60*60*24);
                         if(diff === 0 || (diff > 0 && diff <= 2)) {
@@ -177,7 +176,6 @@
                         }
                     }
 
-                    // Broadcast Logic Added Back
                     const bDiv = document.createElement('div');
                     bDiv.className = "bg-white border p-3 rounded flex justify-between items-center shadow-sm";
                     bDiv.innerHTML = `<span class="text-sm font-medium">${name}</span> <button onclick="sendBroadSingle('${phone}')" class="bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1 rounded-full text-xs font-bold">मेसेज पाठवा</button>`;
@@ -188,7 +186,7 @@
         }
 
         function sendRemindMsg(phone, name, date) {
-            const msg = `*साईदत्त क्लिनिक - आपुलकीची आठवण* 🌿\n\nनमस्कार ${name} जी,\n\nतुमची तब्येत आता सुधारत असेलच. तुमची पुढील तपासणी *${formatDateMarathi(date)}* रोजी आहे. वेळेवर येऊन औषधे सुरू ठेवावीत ही विनंती.\n\n_"आरोग्य हीच खरी संपत्ती"_ 🙏\n- साईदत्त क्लिनिक, सातारा`;
+            const msg = `*साईदत्त क्लिनिक - आपुलकीची आठवण* 🌿\n\nनमस्कार ${name} जी,\n\nतुमची तब्येत आता सुधारत असेलच. तुमची पुढील तपासणी *${formatDateMarathi(date)}* रोजी आहे. वेळेवर येऊन औषधे सुरू ठेवावीत ही विनंती.\n\n_"आरोग्य हीच खरी संपत्ती"_\n\nआपला नम्र,\n*डॉ. रवींद्र घोंगडे* 🙏`;
             window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
