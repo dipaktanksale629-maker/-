@@ -7,7 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        .patient-checked { opacity: 0.4; filter: grayscale(1); background-color: #f3f4f6; }
+        .patient-checked { opacity: 0.35; filter: grayscale(1); background-color: #f3f4f6; }
+        .token-circle { width: 30px; height: 30px; display: flex; items-center; justify-content: center; border-radius: 50%; font-weight: bold; }
         .bg-urgent { background-color: #fee2e2; border-left: 5px solid #ef4444; }
         .bg-upcoming { background-color: #fef9c3; border-left: 5px solid #eab308; }
         #hiddenDatePicker { position: absolute; opacity: 0; pointer-events: none; }
@@ -21,7 +22,7 @@
         <div class="bg-white p-4 rounded-xl shadow-md flex flex-wrap justify-between items-center gap-4 border-b-4 border-blue-600">
             <div class="flex items-center gap-3">
                 <div class="bg-blue-600 text-white p-2 rounded-lg"><i class="fas fa-hand-holding-heart fa-2x"></i></div>
-                <h1 class="text-2xl font-bold text-blue-800">साईदत्त क्लिनिक, सातारा</h1>
+                <h1 class="text-2xl font-bold text-blue-800 uppercase tracking-tight">साईदत्त क्लिनिक, सातारा</h1>
             </div>
             <div class="flex items-center gap-2">
                 <input type="date" id="filterDate" onchange="loadData()" class="border rounded p-1 shadow-sm font-bold text-blue-700">
@@ -57,7 +58,7 @@
                     <thead class="bg-slate-200 text-gray-700">
                         <tr>
                             <th class="p-3 text-center">तपासले</th>
-                            <th class="p-3">नाव & पत्ता</th>
+                            <th class="p-3">क्र. / नाव & पत्ता</th>
                             <th class="p-3">संपर्क</th>
                             <th class="p-3">वेळ</th>
                             <th class="p-3">पुढील भेट</th>
@@ -69,13 +70,8 @@
             </div>
         </div>
 
-        <div id="section-rem" class="hidden bg-white p-5 rounded-xl shadow-lg border">
-            <h2 class="text-xl font-bold mb-4 text-orange-700"><i class="fas fa-heartbeat"></i> काळजीपूर्वक रिमांडर्स</h2>
-            <div id="reminderList" class="space-y-3"></div>
-        </div>
-
+        <div id="section-rem" class="hidden bg-white p-5 rounded-xl shadow-lg border"><div id="reminderList" class="space-y-3"></div></div>
         <div id="section-broad" class="hidden bg-white p-5 rounded-xl shadow-lg border">
-            <h2 class="text-xl font-bold mb-2">📢 आरोग्य संदेश (Broadcast)</h2>
             <textarea id="broadMsg" placeholder="मेसेज लिहा..." class="w-full p-3 border rounded-lg h-24 mb-4"></textarea>
             <div id="broadcastList" class="grid grid-cols-1 md:grid-cols-2 gap-2"></div>
         </div>
@@ -109,10 +105,13 @@
             };
             if(!data.name || !data.phone) return alert("नाव आणि नंबर भरा!");
             
+            // टोकन नंबर काढण्यासाठी आजचे पेशंट मोजणे
+            const currentDayCount = parseInt(document.getElementById('dayCount').innerText) + 1;
+
             document.getElementById('saveBtn').innerText = "नोंदणी होत आहे...";
             try {
                 await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify(data) });
-                const msg = `*साईदत्त क्लिनिक, सातारा* ✨\n\nनमस्ते ${data.name} जी,\n\nतुमची आजची वेळ यशस्वीपणे नोंदवली गेली आहे.\n🗓️ तारीख: *${formatDateMarathi(data.date)}*\n⏰ वेळ: *${data.time}*\n\nआमच्यासाठी तुमचे आरोग्य हीच प्राथमिकता आहे. \n\n_"आरोग्यं धनसंपदा"_ 🌱\n\nआपला नम्र,\n*डॉ. रवींद्र घोंगडे*`;
+                const msg = `*साईदत्त क्लिनिक, सातारा* ✨\n\nनमस्ते ${data.name} जी,\n\nतुमची नोंदणी यशस्वी झाली आहे.\n🔢 तुमचा टोकन नंबर: *${currentDayCount}*\n🗓️ तारीख: *${formatDateMarathi(data.date)}*\n⏰ वेळ: *${data.time}*\n\n_"आरोग्यं धनसंपदा"_ 🌱\n\nआपला नम्र,\n*डॉ. रवींद्र घोंगडे*`;
                 window.open(`https://wa.me/91${data.phone}?text=${encodeURIComponent(msg)}`, '_blank');
                 location.reload();
             } catch(e) { location.reload(); }
@@ -125,7 +124,7 @@
                 if (!nextDate) return;
                 try {
                     await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ action: "updateFollowUp", rowIndex: index + 2, fdate: nextDate })});
-                    const msg = `*साईदत्त क्लिनिक - पुढील भेट* ❤️\n\nप्रिय ${name} जी,\n\nतुमची आजची तपासणी पूर्ण झाली आहे. पुढील उपचारांसाठी तुमची तारीख *${formatDateMarathi(nextDate)}* निश्चित केली आहे.\n\nनिरोगी आयुष्यासाठी आम्ही सदैव सोबत आहोत!\n\n_"निरोगी राहा, आनंदी राहा"_ 🌸\n\nआपला नम्र,\n*डॉ. रवींद्र घोंगडे*`;
+                    const msg = `*साईदत्त क्लिनिक - पुढील भेट* ❤️\n\nप्रिय ${name} जी,\n\nतुमची आजची तपासणी पूर्ण झाली आहे. पुढील उपचारांसाठी तुमची तारीख *${formatDateMarathi(nextDate)}* निश्चित केली आहे.\n\n_"निरोगी राहा, आनंदी राहा"_ 🌸\n\nआपला नम्र,\n*डॉ. रवींद्र घोंगडे*`;
                     window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`, '_blank');
                     location.reload();
                 } catch(e) { location.reload(); }
@@ -156,19 +155,34 @@
                         const tr = document.createElement('tr');
                         if(isChecked) tr.className = "patient-checked";
                         tr.innerHTML = `
-                            <td class="p-3 text-center"><button onclick="markAsChecked(${index}, '${phone}', '${name}')" class="text-2xl ${isChecked ? 'text-green-600' : 'text-gray-300 hover:text-green-500'}"><i class="fas fa-check-circle"></i></button></td>
-                            <td class="p-3 font-bold text-slate-800">${name}<br><span class="text-xs text-blue-500 font-normal"><i class="fas fa-map-marker-alt"></i> ${address || '-'}</span></td>
+                            <td class="p-3 text-center">
+                                <button onclick="markAsChecked(${index}, '${phone}', '${name}')" class="text-2xl ${isChecked ? 'text-green-600' : 'text-gray-300 hover:text-green-500'}">
+                                    <i class="fas fa-check-circle"></i>
+                                </button>
+                            </td>
+                            <td class="p-3 font-bold text-slate-800">
+                                <div class="flex items-center gap-3">
+                                    <span class="token-circle ${isChecked ? 'bg-gray-200 text-gray-500' : 'bg-blue-100 text-blue-700'}">${count}</span>
+                                    <div>
+                                        ${name}
+                                        <div class="text-xs text-blue-500 font-normal"><i class="fas fa-map-marker-alt"></i> ${address || '-'}</div>
+                                    </div>
+                                </div>
+                            </td>
                             <td class="p-3 text-sm">${phone}</td>
                             <td class="p-3 text-sm font-medium text-slate-600">${time || '-'}</td>
                             <td class="p-3 font-bold text-orange-600">${formatDateMarathi(fDate)}</td>
-                            <td class="p-3"><button onclick="editPatient(${index})" class="text-blue-500 mr-4"><i class="fas fa-edit"></i></button><button onclick="window.open('https://wa.me/91${phone}')" class="text-green-500"><i class="fab fa-whatsapp"></i></button></td>
+                            <td class="p-3">
+                                <button onclick="editPatient(${index})" class="text-blue-500 mr-4"><i class="fas fa-edit"></i></button>
+                                <button onclick="window.open('https://wa.me/91${phone}')" class="text-green-500"><i class="fab fa-whatsapp"></i></button>
+                            </td>
                         `;
                         table.appendChild(tr);
                     }
-
+                    
                     if(fDate) {
                         const diff = (new Date(fDate) - new Date(today)) / (1000*60*60*24);
-                        if(diff === 0 || (diff > 0 && diff <= 2)) {
+                        if(diff >= 0 && diff <= 2) {
                             const div = document.createElement('div');
                             div.className = `p-4 rounded-lg shadow flex justify-between items-center ${diff === 0 ? 'bg-urgent' : 'bg-upcoming'}`;
                             div.innerHTML = `<div><b>${name}</b><br><small>भेट: ${formatDateMarathi(fDate)}</small></div><button onclick="sendRemindMsg('${phone}', '${name}', '${fDate}')" class="bg-green-600 text-white px-3 py-2 rounded font-bold text-sm">आठवण करा</button>`;
@@ -178,7 +192,7 @@
 
                     const bDiv = document.createElement('div');
                     bDiv.className = "bg-white border p-3 rounded flex justify-between items-center shadow-sm";
-                    bDiv.innerHTML = `<span class="text-sm font-medium">${name}</span> <button onclick="sendBroadSingle('${phone}')" class="bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1 rounded-full text-xs font-bold">मेसेज पाठवा</button>`;
+                    bDiv.innerHTML = `<span class="text-sm font-medium">${name}</span> <button onclick="sendBroadSingle('${phone}')" class="bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1 rounded-full text-xs font-bold">मेसेज</button>`;
                     broadList.appendChild(bDiv);
                 });
                 document.getElementById('dayCount').innerText = count;
@@ -186,7 +200,7 @@
         }
 
         function sendRemindMsg(phone, name, date) {
-            const msg = `*साईदत्त क्लिनिक - आपुलकीची आठवण* 🌿\n\nनमस्कार ${name} जी,\n\nतुमची तब्येत आता सुधारत असेलच. तुमची पुढील तपासणी *${formatDateMarathi(date)}* रोजी आहे. वेळेवर येऊन औषधे सुरू ठेवावीत ही विनंती.\n\n_"आरोग्य हीच खरी संपत्ती"_\n\nआपला नम्र,\n*डॉ. रवींद्र घोंगडे* 🙏`;
+            const msg = `*साईदत्त क्लिनिक - आपुलकीची आठवण* 🌿\n\nनमस्कार ${name} जी,\n\nतुमची पुढील तपासणी *${formatDateMarathi(date)}* रोजी आहे. वेळेवर येऊन औषधे सुरू ठेवावीत ही विनंती.\n\n_"आरोग्य हीच खरी संपत्ती"_\n\nआपला नम्र,\n*डॉ. रवींद्र घोंगडे* 🙏`;
             window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
