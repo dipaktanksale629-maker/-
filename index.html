@@ -71,7 +71,7 @@
 
     <script>
         // तुमची नवीन URL अपडेट केली आहे
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxviptsjYoceNzQv5D5N82gsRyLGhoG9js28VrtisJ6cLHGspy28rk66ylcr-8Jf5bL/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby65i7Nr5-TwPkuAC9XKOkT8qxV0nHBjmUndejNVcu4wcw6RSa_XSy32Op5Nn7e4rQ/exec";
         let allPatients = [];
 
         function showTab(tab) {
@@ -132,11 +132,15 @@
                 let count = 0;
 
                 allPatients.forEach((row, index) => {
-                    const name = row[0], phone = row[1], pDate = row[3], fDate = row[4];
+                    const name = row[1];   // B: Name
+                    const phone = row[2];  // C: Phone
+                    const pDate = row[4];  // E: Date
+                    const fDate = row[8];  // I: FUP_date
+                    const status = row[9]; // J: Checked
 
                     if(pDate === today) {
                         count++;
-                        const isChecked = (fDate && fDate !== "");
+                        const isChecked = (status === "Checked");
                         const tr = document.createElement('tr');
                         if(isChecked) tr.className = "patient-checked";
                         tr.innerHTML = `
@@ -183,10 +187,10 @@
 
         function editPatient(idx) {
             const p = allPatients[idx];
-            document.getElementById('pName').value = p[0];
-            document.getElementById('pPhone').value = p[1];
-            document.getElementById('pAddress').value = p[2];
-            document.getElementById('pDate').value = p[3];
+            document.getElementById('pName').value = p[1];
+            document.getElementById('pPhone').value = p[2];
+            document.getElementById('pAddress').value = p[3];
+            document.getElementById('pDate').value = p[4];
             document.getElementById('pNotes').value = p[5];
             window.scrollTo(0,0);
         }
