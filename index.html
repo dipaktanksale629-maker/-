@@ -21,7 +21,7 @@
         <div class="bg-white p-4 rounded-xl shadow-md flex flex-wrap justify-between items-center gap-4 border-b-4 border-blue-600">
             <div class="flex items-center gap-3">
                 <div class="bg-blue-600 text-white p-2 rounded-lg"><i class="fas fa-hand-holding-heart fa-2x"></i></div>
-                <h1 class="text-2xl font-bold text-blue-800 text-center md:text-left">साईदत्त क्लिनिक, सातारा</h1>
+                <h1 class="text-2xl font-bold text-blue-800">साईदत्त क्लिनिक, सातारा</h1>
             </div>
             <div class="flex items-center gap-2">
                 <input type="date" id="filterDate" onchange="loadData()" class="border rounded p-1 shadow-sm font-bold text-blue-700">
@@ -42,8 +42,8 @@
                 <input type="text" id="pAddress" placeholder="पत्ता" class="p-2 border rounded focus:ring-2 focus:ring-blue-400 outline-none">
                 
                 <div class="flex gap-2">
-                    <input type="date" id="pDate" class="p-2 border rounded w-full text-sm">
-                    <input type="time" id="pTime" class="p-2 border rounded w-32 text-sm shadow-inner bg-white">
+                    <input type="date" id="pDate" class="p-2 border rounded w-full">
+                    <input type="time" id="pTime" class="p-2 border rounded w-32">
                 </div>
 
                 <textarea id="pNotes" placeholder="लक्षणे / माहिती" class="p-2 border rounded md:col-span-3 h-12 outline-none"></textarea>
@@ -69,8 +69,13 @@
             </div>
         </div>
 
-        <div id="section-rem" class="hidden bg-white p-5 rounded-xl shadow-lg border"><div id="reminderList" class="space-y-3"></div></div>
+        <div id="section-rem" class="hidden bg-white p-5 rounded-xl shadow-lg border">
+            <h2 class="text-xl font-bold mb-4 text-orange-700"><i class="fas fa-heartbeat"></i> काळजीपूर्वक रिमांडर्स</h2>
+            <div id="reminderList" class="space-y-3"></div>
+        </div>
+
         <div id="section-broad" class="hidden bg-white p-5 rounded-xl shadow-lg border">
+            <h2 class="text-xl font-bold mb-2">📢 आरोग्य संदेश (Broadcast)</h2>
             <textarea id="broadMsg" placeholder="मेसेज लिहा..." class="w-full p-3 border rounded-lg h-24 mb-4"></textarea>
             <div id="broadcastList" class="grid grid-cols-1 md:grid-cols-2 gap-2"></div>
         </div>
@@ -130,6 +135,8 @@
 
         async function loadData() {
             const table = document.getElementById('patientTable');
+            const remList = document.getElementById('reminderList');
+            const broadList = document.getElementById('broadcastList');
             const fDateInput = document.getElementById('filterDate');
             if(!fDateInput.value) fDateInput.value = new Date().toISOString().split('T')[0];
             const today = fDateInput.value;
@@ -137,9 +144,12 @@
             try {
                 const res = await fetch(WEB_APP_URL);
                 allPatients = await res.json();
-                table.innerHTML = ""; let count = 0;
+                table.innerHTML = ""; remList.innerHTML = ""; broadList.innerHTML = "";
+                let count = 0;
+
                 allPatients.forEach((row, index) => {
                     const name = row[1], phone = row[2], address = row[3], pDate = row[4], time = row[6], fDate = row[8], status = row[9];
+                    
                     if(pDate === today) {
                         count++;
                         const isChecked = (status === "Checked");
@@ -155,10 +165,31 @@
                         `;
                         table.appendChild(tr);
                     }
-                    // Reminder Logic (Hidden for brevity)
+
+                    // Reminder Logic Added Back
+                    if(fDate) {
+                        const diff = (new Date(fDate) - new Date(today)) / (1000*60*60*24);
+                        if(diff === 0 || (diff > 0 && diff <= 2)) {
+                            const div = document.createElement('div');
+                            div.className = `p-4 rounded-lg shadow flex justify-between items-center ${diff === 0 ? 'bg-urgent' : 'bg-upcoming'}`;
+                            div.innerHTML = `<div><b>${name}</b><br><small>भेट: ${formatDateMarathi(fDate)}</small></div><button onclick="sendRemindMsg('${phone}', '${name}', '${fDate}')" class="bg-green-600 text-white px-3 py-2 rounded font-bold text-sm">आठवण करा</button>`;
+                            remList.appendChild(div);
+                        }
+                    }
+
+                    // Broadcast Logic Added Back
+                    const bDiv = document.createElement('div');
+                    bDiv.className = "bg-white border p-3 rounded flex justify-between items-center shadow-sm";
+                    bDiv.innerHTML = `<span class="text-sm font-medium">${name}</span> <button onclick="sendBroadSingle('${phone}')" class="bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1 rounded-full text-xs font-bold">मेसेज पाठवा</button>`;
+                    broadList.appendChild(bDiv);
                 });
                 document.getElementById('dayCount').innerText = count;
             } catch(e) { }
+        }
+
+        function sendRemindMsg(phone, name, date) {
+            const msg = `*साईदत्त क्लिनिक - आपुलकीची आठवण* 🌿\n\nनमस्कार ${name} जी,\n\nतुमची तब्येत आता सुधारत असेलच. तुमची पुढील तपासणी *${formatDateMarathi(date)}* रोजी आहे. वेळेवर येऊन औषधे सुरू ठेवावीत ही विनंती.\n\n_"आरोग्य हीच खरी संपत्ती"_ 🙏\n- साईदत्त क्लिनिक, सातारा`;
+            window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
         function sendBroadSingle(num) {
